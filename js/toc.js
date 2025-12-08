@@ -81,6 +81,50 @@
                     top: offsetTop,
                     behavior: 'smooth'
                 });
+                // Close overlay on mobile after clicking link
+                if (fab && toc) {
+                    toc.classList.remove('toc-overlay-open');
+                    fab.classList.remove('active');
+                }
+            }
+        }
+    });
+
+    // Mobile FAB for TOC
+    const toc = document.querySelector('.article__toc');
+    let fab = null;
+
+    function createFab() {
+        if (fab) return;
+        fab = document.createElement('button');
+        fab.className = 'toc-fab';
+        fab.setAttribute('aria-label', 'Toggle table of contents');
+        fab.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h6" />
+            </svg>
+        `;
+        document.body.appendChild(fab);
+
+        fab.addEventListener('click', () => {
+            if (toc) {
+                toc.classList.toggle('toc-overlay-open');
+                fab.classList.toggle('active');
+            }
+        });
+    }
+
+    // Only create FAB if there's a TOC
+    if (toc && tocItems.length > 0) {
+        createFab();
+    }
+
+    // Close TOC overlay when clicking outside
+    document.addEventListener('click', (e) => {
+        if (toc && toc.classList.contains('toc-overlay-open')) {
+            if (!toc.contains(e.target) && !fab.contains(e.target)) {
+                toc.classList.remove('toc-overlay-open');
+                fab.classList.remove('active');
             }
         }
     });

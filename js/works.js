@@ -59,7 +59,8 @@
 
         // Add click handlers
         tagContainer.querySelectorAll('.works__filter-pill').forEach(pill => {
-            pill.addEventListener('click', () => {
+            pill.addEventListener('click', (e) => {
+                e.preventDefault();
                 const tag = pill.dataset.tag;
                 toggleTag(tag);
             });
@@ -180,7 +181,8 @@
 
         // Type filters
         typePills.forEach(pill => {
-            pill.addEventListener('click', () => {
+            pill.addEventListener('click', (e) => {
+                e.preventDefault();
                 currentType = pill.dataset.type;
                 typePills.forEach(p => p.classList.toggle('active', p === pill));
                 render();

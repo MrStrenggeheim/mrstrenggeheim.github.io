@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Works by Florian Hunecke - Projects, Blog Posts, and Publications.">
     <title>Works - Florian Hunecke</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="stylesheet" href="/css/style.css">
     <script src="/js/theme.js" defer></script>
     <script src="/js/works.js" defer></script>
@@ -41,45 +42,36 @@
     <main class="main">
         <div class="container">
             <section class="works">
-                <!-- Main content area -->
-                <div class="works__main">
-                    <div class="works__header">
-                        <p class="page-title works__title">Works</p>
+                <!-- Header -->
+                <div class="works__header">
+                    <p class="page-title works__title">Works</p>
+                </div>
+
+                <!-- Top bar: search + view toggle -->
+                <div class="works__topbar">
+                    <div class="works__search">
+                        <input type="text" class="works__search-input" placeholder="Search works..."
+                            aria-label="Search works">
                     </div>
-
-                    <!-- Top bar: search + view toggle -->
-                    <div class="works__topbar">
-                        <div class="works__search">
-                            <input type="text" class="works__search-input" placeholder="Search works..."
-                                aria-label="Search works">
-                        </div>
-                        <div class="works__view-toggle">
-                            <button class="works__view-btn active" data-view="list" aria-label="List view">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                            </button>
-                            <button class="works__view-btn" data-view="gallery" aria-label="Gallery view">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <span class="works__count">0 entries</span>
-
-                    <!-- Works Grid -->
-                    <div class="works__grid list">
-                        <!-- Works are loaded dynamically by JS -->
+                    <div class="works__view-toggle">
+                        <button class="works__view-btn active" data-view="list" aria-label="List view">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                        <button class="works__view-btn" data-view="gallery" aria-label="Gallery view">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Right sidebar with filters -->
+                <!-- Right sidebar with filters (on desktop) / between search and entries (on mobile) -->
                 <aside class="works__sidebar">
                     <div class="works__filter-group">
                         <span class="works__filter-label">Type</span>
@@ -97,6 +89,16 @@
                         </div>
                     </div>
                 </aside>
+
+                <!-- Main content area -->
+                <div class="works__main">
+                    <span class="works__count">0 entries</span>
+
+                    <!-- Works Grid -->
+                    <div class="works__grid list">
+                        <!-- Works are loaded dynamically by JS -->
+                    </div>
+                </div>
             </section>
         </div>
     </main>
