@@ -10,7 +10,7 @@
       "Python",
       "Drug Discovery"
     ],
-    "thumbnail": "/assets/thumbnails/placeholder.jpg",
+    "thumbnail": "/assets/thumbnails/placeholder.png",
     "url": "/works/building-a-graph-neural-network-for-molecular-generation.html",
     "readingTime": 1
   },
@@ -25,7 +25,7 @@
       "Diffusion",
       "Medical"
     ],
-    "thumbnail": "/assets/thumbnails/placeholder.jpg",
+    "thumbnail": "/assets/thumbnails/placeholder.png",
     "url": "/works/understanding-diffusion-models-for-image-generation.html",
     "readingTime": 2
   },
@@ -40,7 +40,7 @@
       "Fairness",
       "Computer Vision"
     ],
-    "thumbnail": "/assets/thumbnails/placeholder.jpg",
+    "thumbnail": "/assets/thumbnails/placeholder.png",
     "url": "/works/towards-fair-and-accurate-medical-image-embeddings.html",
     "readingTime": 2
   }

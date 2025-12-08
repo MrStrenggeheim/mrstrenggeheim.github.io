@@ -4,7 +4,7 @@ subtitle: "Bachelor's thesis on developing bias-aware representation learning me
 date: 2024-04-15
 type: publication
 tags: [ML, Medical, Fairness, Computer Vision]
-thumbnail: /assets/thumbnails/placeholder.jpg 
+thumbnail: /assets/thumbnails/placeholder.png
 ---
 
 ## Abstract

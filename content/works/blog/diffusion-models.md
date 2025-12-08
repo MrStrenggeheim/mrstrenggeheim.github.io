@@ -4,7 +4,7 @@ subtitle: "A practical introduction to denoising diffusion probabilistic models 
 date: 2024-10-20
 type: blog
 tags: [ML, Computer Vision, Diffusion, Medical]
-thumbnail: /assets/thumbnails/placeholder.jpg
+thumbnail: /assets/thumbnails/placeholder.png
 ---
 
 ## What are Diffusion Models?

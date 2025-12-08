@@ -4,7 +4,7 @@ subtitle: "Exploring de-novo molecular design using message-passing neural netwo
 date: 2024-11-15
 type: project
 tags: [ML, GNN, Python, Drug Discovery]
-thumbnail: /assets/thumbnails/placeholder.jpg
+thumbnail: /assets/thumbnails/placeholder.png
 ---
 
 ## Introduction
