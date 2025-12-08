@@ -1,0 +1,47 @@
+[
+  {
+    "title": "Building a Graph Neural Network for Molecular Generation",
+    "subtitle": "Exploring de-novo molecular design using message-passing neural networks and reinforcement learning for drug discovery.",
+    "date": "2024-11-15",
+    "type": "project",
+    "tags": [
+      "ML",
+      "GNN",
+      "Python",
+      "Drug Discovery"
+    ],
+    "thumbnail": "/assets/thumbnails/placeholder.jpg",
+    "url": "/works/building-a-graph-neural-network-for-molecular-generation.html",
+    "readingTime": 1
+  },
+  {
+    "title": "Understanding Diffusion Models for Image Generation",
+    "subtitle": "A practical introduction to denoising diffusion probabilistic models and their application in medical imaging.",
+    "date": "2024-10-20",
+    "type": "blog",
+    "tags": [
+      "ML",
+      "Computer Vision",
+      "Diffusion",
+      "Medical"
+    ],
+    "thumbnail": "/assets/thumbnails/placeholder.jpg",
+    "url": "/works/understanding-diffusion-models-for-image-generation.html",
+    "readingTime": 2
+  },
+  {
+    "title": "Towards Fair and Accurate Medical Image Embeddings",
+    "subtitle": "Bachelor's thesis on developing bias-aware representation learning methods for medical imaging applications.",
+    "date": "2024-04-15",
+    "type": "publication",
+    "tags": [
+      "ML",
+      "Medical",
+      "Fairness",
+      "Computer Vision"
+    ],
+    "thumbnail": "/assets/thumbnails/placeholder.jpg",
+    "url": "/works/towards-fair-and-accurate-medical-image-embeddings.html",
+    "readingTime": 2
+  }
+]
