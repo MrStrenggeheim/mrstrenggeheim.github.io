@@ -137,14 +137,12 @@
         }
 
         grid.innerHTML = filtered.map(work => `
-      <article class="work-card">
+      <a href="${work.url}" class="work-card">
         <div class="work-card__thumbnail">
           <img src="${work.thumbnail || '/assets/thumbnails/default.png'}" alt="${work.title}" loading="lazy">
         </div>
         <div class="work-card__content">
-          <h3 class="work-card__title">
-            <a href="${work.url}">${work.title}</a>
-          </h3>
+          <h3 class="work-card__title">${work.title}</h3>
           <p class="work-card__subtitle">${work.subtitle || ''}</p>
           <div class="work-card__meta">
             <span class="work-card__date">${formatDate(work.date)}</span>
@@ -154,7 +152,7 @@
             </span>
           </div>
         </div>
-      </article>
+      </a>
     `).join('');
     }
 
