@@ -547,7 +547,7 @@ img {
 
 .cv__entry {
   display: grid;
-  grid-template-columns: 150px 1fr;
+  grid-template-columns: 12em 1fr;
   gap: var(--space-lg);
   margin-bottom: var(--space-md);
   padding-bottom: var(--space-md);
@@ -562,14 +562,16 @@ img {
   font-size: var(--font-size-sm);
 }
 
-.cv__entry-date {
+.cv__entry-location {
   color: var(--text-secondary);
   margin-bottom: var(--space-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
 }
 
-.cv__entry-location {
+.cv__entry-date {
   color: var(--text-muted);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
 }
 
 .cv__entry-content {
@@ -603,10 +605,51 @@ img {
   margin-bottom: var(--space-xs);
 }
 
+/* Row-based entries with subentries */
+.cv__entry--with-rows {
+  display: block;
+  padding-bottom: var(--space-md);
+}
+
+.cv__entry-row {
+  display: grid;
+  grid-template-columns: 12em 1fr;
+  gap: var(--space-lg);
+}
+
+.cv__entry-row-meta {
+  font-size: var(--font-size-sm);
+  text-align: left;
+}
+
+.cv__entry-row-content {
+  flex: 1;
+}
+
+/* Subtitle rows */
+.cv__entry-row--sub {
+  margin-top: var(--space-sm);
+}
+
+.cv__subentry-title {
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xs);
+}
+
 @media (max-width: 768px) {
   .cv__entry {
     grid-template-columns: 1fr;
     gap: var(--space-sm);
+  }
+
+  .cv__entry-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-xs);
+  }
+
+  .cv__entry-row-meta {
+    text-align: left;
   }
 }
 
@@ -948,6 +991,8 @@ img {
 
 .article__main {
   max-width: 800px;
+  min-width: 0;
+  width: 100%;
 }
 
 .article__header {
@@ -995,6 +1040,43 @@ img {
 /* Article content */
 .article__content {
   line-height: 1.8;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* Tables need horizontal scroll wrapper */
+.article__content table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: var(--space-md);
+  border-collapse: collapse;
+}
+
+/* Table cell styling */
+.article__content th,
+.article__content td {
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  color: var(--text-secondary);
+}
+
+/* Table header styling - bold with thin bottom border */
+.article__content th {
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Reset tr.header class that Pandoc generates (conflicts with page header) */
+.article__content tr.header {
+  /* Override any page header styles that might leak here */
+  position: static;
+  background: transparent;
+  height: auto;
+  z-index: auto;
 }
 
 .article__content h2 {
@@ -1040,19 +1122,22 @@ img {
   margin-bottom: var(--space-sm);
 }
 
-.article__content code {
+/* Inline code only - don't override Prism code blocks */
+.article__content code:not([class*="language-"]) {
   background-color: var(--bg-secondary);
   padding: 0.2em 0.4em;
   font-family: var(--font-mono);
   font-size: 0.9em;
 }
 
-.article__content pre {
+/* Pre blocks without Prism classes */
+.article__content pre:not([class*="language-"]) {
   background-color: var(--bg-secondary);
   padding: var(--space-md);
   overflow-x: auto;
   margin-bottom: var(--space-md);
   border: 1px solid var(--border);
+  max-width: 100%;
 }
 
 .article__content pre code {
@@ -1132,16 +1217,20 @@ img {
   .article__toc.toc-overlay-open {
     display: block;
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: 60vh;
+    bottom: var(--space-lg);
+    right: calc(var(--space-lg) + 56px);
+    top: auto;
+    left: auto;
+    width: 260px;
+    max-height: 50vh;
     overflow-y: auto;
     background-color: var(--bg-secondary);
-    border-top: 1px solid var(--border);
-    padding: var(--space-lg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md);
     z-index: 999;
-    animation: slideUp 0.3s ease-out;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.2s ease-out;
   }
 }
 
@@ -1185,6 +1274,18 @@ img {
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(100%);
@@ -1214,4 +1315,162 @@ img {
 
 .hidden {
   display: none !important;
+}
+
+/* ============================================
+   SYNTAX HIGHLIGHTING (Prism.js)
+   ============================================ */
+
+/* Override Prism theme to match site colors */
+pre[class*="language-"],
+code[class*="language-"] {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  tab-size: 4;
+}
+
+/* Commented out - these overrides were for Prism Tomorrow theme
+   Duotone Dark theme has its own colors that work better */
+/*
+[data-theme="dark"] pre[class*="language-"] {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+[data-theme="light"] pre[class*="language-"] {
+  background-color: #fafafa;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+[data-theme="light"] code[class*="language-"] {
+  color: #383a42;
+}
+
+[data-theme="light"] .token.comment,
+[data-theme="light"] .token.prolog,
+[data-theme="light"] .token.doctype,
+[data-theme="light"] .token.cdata {
+  color: #a0a1a7;
+}
+
+[data-theme="light"] .token.punctuation {
+  color: #383a42;
+}
+
+[data-theme="light"] .token.property,
+[data-theme="light"] .token.tag,
+[data-theme="light"] .token.boolean,
+[data-theme="light"] .token.number,
+[data-theme="light"] .token.constant,
+[data-theme="light"] .token.symbol {
+  color: #986801;
+}
+
+[data-theme="light"] .token.selector,
+[data-theme="light"] .token.attr-name,
+[data-theme="light"] .token.string,
+[data-theme="light"] .token.char,
+[data-theme="light"] .token.builtin {
+  color: #50a14f;
+}
+
+[data-theme="light"] .token.operator,
+[data-theme="light"] .token.entity,
+[data-theme="light"] .token.url,
+[data-theme="light"] .language-css .token.string,
+[data-theme="light"] .style .token.string,
+[data-theme="light"] .token.variable {
+  color: #0184bc;
+}
+
+[data-theme="light"] .token.atrule,
+[data-theme="light"] .token.attr-value,
+[data-theme="light"] .token.keyword {
+  color: #a626a4;
+}
+
+[data-theme="light"] .token.function,
+[data-theme="light"] .token.class-name {
+  color: #4078f2;
+}
+
+[data-theme="light"] .token.regex,
+[data-theme="light"] .token.important {
+  color: #e45649;
+}
+*/
+
+/* Line numbers - non-selectable */
+.line-numbers .line-numbers-rows {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  pointer-events: none;
+  border-right: 1px solid var(--border);
+  padding-right: var(--space-sm);
+}
+
+.line-numbers-rows>span::before {
+  color: var(--text-muted);
+}
+
+/* Code block container */
+.article__content pre[class*="language-"] {
+  position: relative;
+  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  padding-left: 3.5em;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Copy button styling */
+div.code-toolbar>.toolbar {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+div.code-toolbar:hover>.toolbar {
+  opacity: 1;
+}
+
+div.code-toolbar>.toolbar>.toolbar-item>button,
+div.code-toolbar>.toolbar>.toolbar-item>span {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .5em !important;
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+div.code-toolbar>.toolbar>.toolbar-item>button:hover {
+  background: var(--accent-bg);
+  color: var(--bg-primary);
+  border-color: var(--accent);
+}
+
+div.code-toolbar>.toolbar>.toolbar-item>button:focus {
+  outline: none;
+}
+
+/* Line numbers */
+pre.numberSource code>span>a:first-child::before {
+  content: attr(data-line-number);
+  color: var(--text-muted);
+  text-align: right;
+  padding-right: var(--space-md);
+  min-width: 2.5em;
+  display: inline-block;
+  border-right: 1px solid var(--border);
+  margin-right: var(--space-md);
 }

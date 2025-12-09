@@ -1,5 +1,17 @@
 [
   {
+    "title": "Technik & Recht",
+    "subtitle": "A practical introduction to denoising diffusion probabilistic models and their application in medical imaging.",
+    "date": "Thu Aug 02 2021",
+    "type": "blog",
+    "tags": [
+      "IT"
+    ],
+    "thumbnail": "/assets/thumbnails/placeholder.png",
+    "url": "/works/technik-recht.html",
+    "readingTime": 58
+  },
+  {
     "title": "Building a Graph Neural Network for Molecular Generation",
     "subtitle": "Exploring de-novo molecular design using message-passing neural networks and reinforcement learning for drug discovery.",
     "date": "2024-11-15",

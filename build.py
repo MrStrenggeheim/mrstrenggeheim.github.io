@@ -17,26 +17,18 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-# Try to import optional dependencies
-try:
-    import yaml
-    import markdown
-    from markdown.extensions.toc import TocExtension
-    from markdown.extensions.fenced_code import FencedCodeExtension
-    HAS_DEPS = True
-except ImportError:
-    HAS_DEPS = False
-    print("Installing required dependencies...")
-    os.system("pip install pyyaml markdown")
-    import yaml
-    import markdown
-    from markdown.extensions.toc import TocExtension
-    from markdown.extensions.fenced_code import FencedCodeExtension
+import yaml
+import pypandoc
 
 # Configuration
 CONTENT_DIR = Path("content/works")
 OUTPUT_DIR = Path("works")
 INDEX_FILE = Path("content/works.json")
+
+# Prism.js Theme - Change this to switch syntax highlighting theme
+# Options: prism, prism-dark, prism-funky, prism-okaidia, prism-twilight, 
+#          prism-coy, prism-solarizedlight, prism-tomorrow, prism-darcula
+PRISM_THEME = "prism-darcula"
 
 # Article HTML template
 ARTICLE_TEMPLATE = """<!DOCTYPE html>
@@ -46,9 +38,34 @@ ARTICLE_TEMPLATE = """<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="{subtitle}">
   <title>{title} - Florian Hunecke</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <!-- Prism.js for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/{prism_theme}.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/toolbar/prism-toolbar.min.css">
   <link rel="stylesheet" href="/css/style.css">
   <script src="/js/theme.js" defer></script>
   <script src="/js/toc.js" defer></script>
+  <!-- MathJax for LaTeX math rendering -->
+  <script>
+    MathJax = {{
+      tex: {{
+        inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+        displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+      }},
+      svg: {{
+        fontCache: 'global'
+      }}
+    }};
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <!-- Prism.js scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/toolbar/prism-toolbar.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js" defer></script>
+  <script src="/js/code.js" defer></script>
 </head>
 <body>
   <!-- Header -->
@@ -172,14 +189,58 @@ def format_date(date_obj) -> str:
 
 
 def process_markdown(md_content: str) -> str:
-    """Convert markdown to HTML with extensions."""
-    md = markdown.Markdown(extensions=[
-        'fenced_code',
-        'tables',
-        'toc',
-        'nl2br',
-    ])
-    return md.convert(md_content)
+    """Convert markdown to HTML using Pandoc with full extension support.
+    
+    Enables:
+    - GFM (GitHub Flavored Markdown)
+    - Fenced divs (::: name :::)
+    - Footnotes
+    - Math ($$, $)
+    - Smart quotes
+    
+    Post-processes HTML to make code blocks compatible with Prism.js.
+    """
+    try:
+        # Use markdown format with all extensions for maximum compatibility
+        html = pypandoc.convert_text(
+            md_content,
+            'html',
+            format='markdown+gfm_auto_identifiers+fenced_divs+footnotes+tex_math_dollars+smart+fenced_code_blocks+fenced_code_attributes',
+            extra_args=['--no-highlight', '--mathjax']
+        )
+        
+        # Post-process: Convert Pandoc's code block format to Prism-compatible format
+        # Pandoc outputs: <div class="sourceCode"><pre class="python"><code class="sourceCode python">
+        # or: <pre class="python">code</pre>
+        # Prism expects: <pre><code class="language-python">code</code></pre>
+        
+        # Pattern 1: Full sourceCode div wrapper (Pandoc default)
+        html = re.sub(
+            r'<div class="sourceCode[^"]*"[^>]*>\s*<pre[^>]*>\s*<code class="sourceCode\s+(\w+)"[^>]*>(.*?)</code>\s*</pre>\s*</div>',
+            r'<pre><code class="language-\1">\2</code></pre>',
+            html,
+            flags=re.DOTALL
+        )
+        
+        # Pattern 2: Simple pre with class (--no-highlight mode)
+        html = re.sub(
+            r'<pre class="(\w+)">(.*?)</pre>',
+            r'<pre><code class="language-\1">\2</code></pre>',
+            html,
+            flags=re.DOTALL
+        )
+        
+        # Pattern 3: Pre with code but wrong class format
+        html = re.sub(
+            r'<pre><code class="sourceCode (\w+)"',
+            r'<pre><code class="language-\1"',
+            html
+        )
+        
+        return html
+    except Exception as e:
+        print(f"Pandoc error: {e}")
+        return f"<p>Error processing markdown: {e}</p>"
 
 
 def build_works():
@@ -237,6 +298,7 @@ def build_works():
                 reading_time=reading_time,
                 tags_html=tags_html,
                 content=html_content,
+                prism_theme=PRISM_THEME,
             )
             
             # Write article HTML file
@@ -264,8 +326,223 @@ def build_works():
     INDEX_FILE.write_text(json.dumps(works, indent=2), encoding="utf-8")
     print(f"📋 Generated index: {INDEX_FILE} ({len(works)} works)")
     
-    print("✅ Build complete!")
+    print("✅ Works build complete!")
+
+
+# CV HTML Template
+CV_TEMPLATE = """<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Curriculum Vitae of Florian Hunecke - Education, Work Experience, and Achievements.">
+    <title>CV - Florian Hunecke</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js" defer></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header__container">
+            <a href="/" class="header__logo">FH</a>
+            <nav class="header__nav">
+                <button class="header__burger" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="header__nav-links">
+                    <li><a href="/" class="header__nav-link">About</a></li>
+                    <li><a href="/cv.html" class="header__nav-link active">CV</a></li>
+                    <li><a href="/works.html" class="header__nav-link">Works</a></li>
+                </ul>
+                <button class="theme-toggle" aria-label="Toggle dark mode">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <section class="cv">
+                <div class="cv__header">
+                    <p class="page-title cv__title">Curriculum Vitae</p>
+                </div>
+
+{sections_html}
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer__container">
+            <p class="footer__copyright">© 2024 Florian Hunecke</p>
+            <div class="footer__links">
+                <a href="https://github.com/MrStrenggeheim" class="footer__link" aria-label="GitHub" target="_blank"
+                    rel="noopener">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                    </svg>
+                </a>
+                <a href="https://linkedin.com/in/florian-hunecke" class="footer__link" aria-label="LinkedIn"
+                    target="_blank" rel="noopener">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>
+"""
+
+
+def build_cv():
+    """Generate cv.html from content/cv.yaml."""
+    print("🔨 Building CV...")
+    
+    cv_yaml_path = Path("content/cv.yaml")
+    if not cv_yaml_path.exists():
+        print("  ⚠️ content/cv.yaml not found, skipping CV generation")
+        return
+    
+    cv_data = yaml.safe_load(cv_yaml_path.read_text(encoding="utf-8"))
+    
+    sections_html = ""
+    for section in cv_data.get("sections", []):
+        section_title = section.get("title", "")
+        entries_html = ""
+        
+        for entry in section.get("entries", []):
+            # Check if entry has subentries (multiple roles at same org)
+            subentries = entry.get("subentries", [])
+            
+            if subentries:
+                # Entry with subentries - single bordered entry with rows
+                # Each row has left (date/location) and right (content) aligned
+                entry_title = entry.get("title", "")
+                entry_date = entry.get("date", "")
+                entry_location = entry.get("location", "")
+                
+                rows_html = ""
+                
+                # Title row (if date/location defined at entry level)
+                title_meta = ""
+                if entry_date:
+                    title_meta += f'<p class="cv__entry-date">{entry_date}</p>'
+                if entry_location:
+                    title_meta += f'<p class="cv__entry-location">{entry_location}</p>'
+                
+                title_content = ""
+                if entry_title:
+                    title_content = f'<h3 class="cv__entry-title">{entry_title}</h3>'
+                
+                rows_html += f'''
+                        <div class="cv__entry-row">
+                            <div class="cv__entry-row-meta">{title_meta}</div>
+                            <div class="cv__entry-row-content">{title_content}</div>
+                        </div>'''
+                
+                # Subtitle rows
+                for sub in subentries:
+                    sub_date = sub.get("date", "")
+                    sub_location = sub.get("location", "")
+                    
+                    # Meta for this subtitle row (only if defined at subtitle level)
+                    sub_meta = ""
+                    if sub_date:
+                        sub_meta += f'<p class="cv__entry-date">{sub_date}</p>'
+                    if sub_location:
+                        sub_meta += f'<p class="cv__entry-location">{sub_location}</p>'
+                    
+                    # Content for this subtitle row
+                    sub_content = ""
+                    if sub.get("subtitle"):
+                        sub_content += f'<p class="cv__subentry-title">{sub["subtitle"]}</p>'
+                    if sub.get("description"):
+                        sub_content += f'<p class="cv__entry-description">{sub["description"]}</p>'
+                    if sub.get("items"):
+                        items_html = "\n".join([f'<li>{item}</li>' for item in sub["items"]])
+                        sub_content += f'<ul class="cv__entry-list">{items_html}</ul>'
+                    
+                    rows_html += f'''
+                        <div class="cv__entry-row cv__entry-row--sub">
+                            <div class="cv__entry-row-meta">{sub_meta}</div>
+                            <div class="cv__entry-row-content">{sub_content}</div>
+                        </div>'''
+                
+                entries_html += f"""
+                    <article class="cv__entry cv__entry--with-rows">
+                        {rows_html}
+                    </article>
+"""
+            else:
+                # Standard entry (backwards compatible)
+                # Build meta column
+                meta_html = ""
+                if entry.get("date"):
+                    meta_html += f'<p class="cv__entry-date">{entry["date"]}</p>\n'
+                if entry.get("location"):
+                    meta_html += f'                            <p class="cv__entry-location">{entry["location"]}</p>\n'
+                
+                # Build content column
+                content_parts = []
+                if entry.get("title"):
+                    content_parts.append(f'<h3 class="cv__entry-title">{entry["title"]}</h3>')
+                if entry.get("subtitle"):
+                    content_parts.append(f'<p class="cv__entry-subtitle">{entry["subtitle"]}</p>')
+                if entry.get("description"):
+                    content_parts.append(f'<p class="cv__entry-description">{entry["description"]}</p>')
+                if entry.get("items"):
+                    items_html = "\n".join([f'                                <li>{item}</li>' for item in entry["items"]])
+                    content_parts.append(f'<ul class="cv__entry-list">\n{items_html}\n                            </ul>')
+                
+                content_html = "\n                            ".join(content_parts)
+                
+                entries_html += f"""
+                    <article class="cv__entry">
+                        <div class="cv__entry-meta">
+                            {meta_html.strip()}
+                        </div>
+                        <div class="cv__entry-content">
+                            {content_html}
+                        </div>
+                    </article>
+"""
+        
+        sections_html += f"""
+                <!-- {section_title} -->
+                <section class="cv__section">
+                    <h2 class="cv__section-title">{section_title}</h2>
+{entries_html}                </section>
+"""
+    
+    # Generate final HTML
+    cv_html = CV_TEMPLATE.format(sections_html=sections_html)
+    
+    # Write to cv.html
+    output_path = Path("cv.html")
+    output_path.write_text(cv_html, encoding="utf-8")
+    print(f"  -> Generated: {output_path}")
+    print("✅ CV build complete!")
 
 
 if __name__ == "__main__":
     build_works()
+    build_cv()
+    print("\n🎉 All builds complete!")
+
