@@ -27,7 +27,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install pyyaml markdown
+        run: pip install pyyaml markdown pypandoc
 
       - name: Build works
         run: python build.py
