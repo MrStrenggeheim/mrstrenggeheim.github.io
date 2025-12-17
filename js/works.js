@@ -1,6 +1,7 @@
 /**
  * Works Page - Search, filter, and view toggle functionality
  * Loads works from works.json and renders dynamically
+ * URL params: ?tags=ML,AI&type=blog&q=search
  */
 
 (function () {
@@ -13,10 +14,82 @@
     // DOM Elements
     const grid = document.querySelector('.works__grid');
     const searchInput = document.querySelector('.works__search-input');
+    const searchClearBtn = document.querySelector('.works__search-clear');
+    const clearAllBtn = document.querySelector('.works__clear-all');
     const typePills = document.querySelectorAll('.works__filter-pill[data-type]');
     const tagContainer = document.querySelector('.works__tags-container');
     const viewBtns = document.querySelectorAll('.works__view-btn');
     const countDisplay = document.querySelector('.works__count');
+
+    // Update URL params (snappy, no page reload)
+    function updateUrlParams() {
+        const params = new URLSearchParams();
+        if (currentType !== 'all') params.set('type', currentType);
+        if (currentTags.length > 0) params.set('tags', currentTags.join(','));
+        if (searchQuery) params.set('q', searchQuery);
+        if (currentView !== 'list') params.set('view', currentView);
+        const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+        history.replaceState(null, '', newUrl);
+        updateClearButtonsVisibility();
+    }
+
+    // Update clear buttons visibility based on current filter state
+    function updateClearButtonsVisibility() {
+        // Search clear X - visible when there's text in the search
+        if (searchClearBtn) {
+            searchClearBtn.classList.toggle('visible', searchQuery.length > 0);
+        }
+        // Clear all button - visible when any filter is active
+        const hasActiveFilters = currentType !== 'all' || currentTags.length > 0 || searchQuery.length > 0;
+        if (clearAllBtn) {
+            clearAllBtn.classList.toggle('visible', hasActiveFilters);
+        }
+    }
+
+    // Clear all filters
+    function clearAllFilters() {
+        currentType = 'all';
+        currentTags = [];
+        searchQuery = '';
+        if (searchInput) searchInput.value = '';
+        typePills.forEach(p => p.classList.toggle('active', p.dataset.type === 'all'));
+        updateTagPills();
+        updateUrlParams();
+        render();
+    }
+
+    // Read URL params on init
+    function readUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Tags (comma-separated or legacy single tag)
+        const tagsParam = urlParams.get('tags');
+        const tagParam = urlParams.get('tag'); // legacy support
+        if (tagsParam) {
+            currentTags = tagsParam.split(',').map(t => decodeURIComponent(t.trim())).filter(Boolean);
+        } else if (tagParam) {
+            currentTags = [decodeURIComponent(tagParam)];
+        }
+
+        // Type
+        const typeParam = urlParams.get('type');
+        if (typeParam && ['all', 'project', 'blog', 'publication'].includes(typeParam)) {
+            currentType = typeParam;
+        }
+
+        // Search query
+        const qParam = urlParams.get('q');
+        if (qParam) {
+            searchQuery = decodeURIComponent(qParam);
+            if (searchInput) searchInput.value = searchQuery;
+        }
+
+        // View mode
+        const viewParam = urlParams.get('view');
+        if (viewParam && ['list', 'gallery'].includes(viewParam)) {
+            currentView = viewParam;
+        }
+    }
 
     // Initialize
     async function init() {
@@ -24,17 +97,21 @@
             const response = await fetch('/content/works.json');
             works = await response.json();
 
-            // Check for tag parameter in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const tagParam = urlParams.get('tag');
-            if (tagParam) {
-                // Decode URL-encoded tag (e.g., %20 -> space)
-                currentTags = [decodeURIComponent(tagParam)];
+            // Read URL params
+            readUrlParams();
+
+            // Update UI to reflect URL state
+            if (currentType !== 'all') {
+                typePills.forEach(p => p.classList.toggle('active', p.dataset.type === currentType));
+            }
+            if (currentView !== 'list') {
+                viewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
             }
 
             renderTags();
             updateTagPills();
             render();
+            updateClearButtonsVisibility();
         } catch (error) {
             console.error('Failed to load works:', error);
             if (grid) {
@@ -86,6 +163,7 @@
             currentTags.splice(index, 1);
         }
         updateTagPills();
+        updateUrlParams();
         render();
     }
 
@@ -183,8 +261,24 @@
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 searchQuery = e.target.value;
+                updateUrlParams();
                 render();
             });
+        }
+
+        // Search clear X button
+        if (searchClearBtn) {
+            searchClearBtn.addEventListener('click', () => {
+                searchQuery = '';
+                if (searchInput) searchInput.value = '';
+                updateUrlParams();
+                render();
+            });
+        }
+
+        // Clear all filters button
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', clearAllFilters);
         }
 
         // Type filters
@@ -193,6 +287,7 @@
                 e.preventDefault();
                 currentType = pill.dataset.type;
                 typePills.forEach(p => p.classList.toggle('active', p === pill));
+                updateUrlParams();
                 render();
             });
         });
@@ -202,6 +297,7 @@
             btn.addEventListener('click', () => {
                 currentView = btn.dataset.view;
                 viewBtns.forEach(b => b.classList.toggle('active', b === btn));
+                updateUrlParams();
                 render();
             });
         });

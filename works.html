@@ -52,6 +52,13 @@
                     <div class="works__search">
                         <input type="text" class="works__search-input" placeholder="Search works..."
                             aria-label="Search works">
+                        <button class="works__search-clear" aria-label="Clear search" type="button">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
                     <div class="works__view-toggle">
                         <button class="works__view-btn active" data-view="list" aria-label="List view">
@@ -73,6 +80,9 @@
 
                 <!-- Right sidebar with filters (on desktop) / between search and entries (on mobile) -->
                 <aside class="works__sidebar">
+                    <button class="works__clear-all" aria-label="Clear all filters" type="button">
+                        Clear All Filters
+                    </button>
                     <div class="works__filter-group">
                         <span class="works__filter-label">Type</span>
                         <div class="works__filter-pills works__filter-container">
