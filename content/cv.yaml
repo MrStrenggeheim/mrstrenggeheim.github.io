@@ -1,7 +1,7 @@
 sections:
   - title: Education
     entries:
-      - location: "Munich, Germany"
+      - location: "Munich, Germany" 
         title: "Technical University of Munich"
         subentries:
           - subtitle: "M.Sc. Computer Science"
@@ -12,42 +12,50 @@ sections:
           - subtitle: "B.Sc. Computer Science (Physics Minor)"
             date: "Sep 2020 – Apr 2024"
             items:
-              - "Thesis: Towards Fair and Accurate Medical Image Embeddings (1.0)"
-              - "Seminar: Bidirectional Charging and V2X Integration (1.3)"
-              - "Practical: Cloud Software Engineering (1.0)"
+              - "Grade: 1.6/1.0, graduated top 12%"
+              - "Thesis: [Towards Fair and Accurate Medical Image Embeddings](/works/towards-fair-and-accurate-medical-image-embeddings.html)"
+              - "Seminar: Bidirectional Charging and V2X Integration"
+              - "Practical: Cloud Software Engineering"
 
-
-      - date: "Sep 2022 – Dec 2022"
+      - title: "University College Dublin"
         location: "Dublin, Ireland"
-        title: "University College Dublin"
-        subtitle: "Erasmus Exchange Semester"
-        items:
-          - "Focus: Data Science"
-      - date: "Sep 2012 – Jul 2020"
+        subentries:
+          - subtitle: "Erasmus Exchange Semester"
+            date: "Sep 2022 – Dec 2022"
+            items:
+              - "Grade 4.0/4.0"
+              - "Full scholarship by Erasmus+ and the German Academic Scholarship Foundation"
+              - "Focus on Data Analytics and Artificial Intelligence"
+
+      - title: "Graf-Rasso-Gymnasium"
         location: "Fürstenfeldbruck, Germany"
-        title: "Graf-Rasso-Gymnasium"
-        subtitle: "Abitur"
-        items:
-          - "Grade: 1.0"
-          - "Subjects: Mathematics, German, Computer Science, Latin, Geography"
+        subentries:
+          - subtitle: "Abitur"
+            date: "Sep 2012 – Jul 2020"
+            items:
+              - "Grade: 1.0/1.0, graduated top of the year"
+              - "Subjects: Mathematics, German, Computer Science, Latin, Geography"
 
   - title: Work Experience
     entries:
       - title: "BMW Group"
         location: "Munich, Germany"
         subentries:
-          - subtitle: "Vehicle Data Analytics (Working Student)"
-            date: "Mar 2025 – Sep 2025"
-          - subtitle: "GenAI Intern"
-            date: "Oct 2024 – Feb 2025"
+          - subtitle: "Vehicle Data Analytics"
+            date: "Oct 2024 – Sep 2025"
+            items:
+              - "Created advanced language model tools for diagnostic and support, improving client interaction and efficiency"
+              - "Leveraged physics-based modeling and data analytics to enhance predictive maintenance and early defect detection"
+              - "Gained hands-on experience in cloud infrastructure and DevOps to ensure scalable and reliable deployment"
 
-
-      - date: "Jan 2023 – Apr 2023"
+      - title: "Oliver Ruhnau Research Group"
         location: "Remote"
-        title: "Oliver Ruhnau Research Group"
-        subtitle: "Data Analytics Assistant"
-        items:
-          - "Predicting energy demand of heat pumps in the UK using advanced data analytics"
+        subentries:
+          - subtitle: "Data Analytics Assistant"
+            date: "Jan 2023 – Apr 2023"
+            items:
+              - "Used advanced data analytics techniques to predict energy demand of heat pumps in the UK"
+              - "Relevant publication: [doi 10.1109/EEM58374.2023.10161914](http://doi.org/10.1109/EEM58374.2023.10161914)"
 
       - title: "Technical University of Munich"
         location: "Munich, Germany"
@@ -59,28 +67,37 @@ sections:
 
   - title: Volunteering
     entries:
-      - date: "Jun 2024 – Present"
-        location: "Munich"
-        title: "Studienstiftung des deutschen Volkes"
-        subtitle: "Spokesperson"
-        description: "Elected as representative of Munich scholarship holders. Responsible for organizing local activities and events."
+      - title: "Studienstiftung des deutschen Volkes"
+        location: "Munich, Germany"
+        subentries:
+          - subtitle: "Spokesperson"
+            date: "Jun 2024 – Present"
+            items:
+              - "Elected as representative of Munich scholarship holders."
+              - "Responsible for organizing local activities and events of the local group of more than 1000 scholarship holders"
 
-      - date: "Jan 2022 – Jun 2024"
-        location: "Germany"
-        title: "Studienstiftung des deutschen Volkes"
-        subtitle: "Education Ambassador"
-        description: "Informing prospective students about scholarship networks and funding opportunities."
+      - title: "Studienstiftung des deutschen Volkes"
+        location: "Munich, Germany"
+        subentries:
+          - subtitle: "Education Ambassador"
+            date: "Jan 2022 – Jun 2024"
+            description: "Informing prospective students about scholarship networks and funding opportunities"
 
   - title: "Certifications & Awards"
     entries:
-      - date: "Apr 2024"
-        title: "Quantitative Trading Camp"
-        subtitle: "Jane Street"
-
-      - date: "Mar 2021"
-        title: "Scholarship Recipient"
-        subtitle: "Studienstiftung des deutschen Volkes"
-
-      - date: "Jul 2019"
-        title: "Summer Academy for Gifted Students"
-        subtitle: "Bavarian Ministry of Education"
+      - title: "Quantitative Trading Camp"
+        date: "Apr 2024"
+        subentries:
+          - subtitle: "Jane Street"
+            date: " "
+      - title: "Scholarship Recipient"
+        date: "Mar 2021"
+        subentries:
+          - subtitle: "Studienstiftung des deutschen Volkes"
+            date: " "
+            description: "Merit-based scholarship (selectivity 0.4%) for German high school students"
+      - title: "Summer Academy for Gifted Students"
+        date: "Jul 2019"
+        subentries:
+          - subtitle: "Bavarian Ministry of Education"
+            date: " "

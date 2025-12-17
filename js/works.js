@@ -23,7 +23,17 @@
         try {
             const response = await fetch('/content/works.json');
             works = await response.json();
+
+            // Check for tag parameter in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const tagParam = urlParams.get('tag');
+            if (tagParam) {
+                // Decode URL-encoded tag (e.g., %20 -> space)
+                currentTags = [decodeURIComponent(tagParam)];
+            }
+
             renderTags();
+            updateTagPills();
             render();
         } catch (error) {
             console.error('Failed to load works:', error);

@@ -5,9 +5,12 @@ date: 2024-04-15
 type: publication
 tags: [ML, Medical, Fairness, Computer Vision]
 thumbnail: /assets/thumbnails/placeholder.png
+links:
+  GitHub: https://github.com/MrStrenggeheim
+  Paper: https://mediatum.ub.tum.de
 ---
 
-## Abstract
+# Abstract
 
 Medical imaging AI systems often exhibit biases that lead to disparate performance across demographic groups. In this thesis, I developed **bias-aware representation learning** methods to create fairer and more accurate embeddings for medical image analysis.
 
