@@ -12,34 +12,31 @@
     "readingTime": 58
   },
   {
-    "title": "Building a Graph Neural Network for Molecular Generation",
-    "subtitle": "Exploring de-novo molecular design using message-passing neural networks and reinforcement learning for drug discovery.",
-    "date": "2024-11-15",
+    "title": "WhatsApp Chat Analyzer",
+    "subtitle": "A chat analyzer for WhatsApp chats.",
+    "date": "2025-11-03",
     "type": "project",
     "tags": [
-      "ML",
-      "GNN",
       "Python",
-      "Drug Discovery"
+      "Data Analytics",
+      "Natural Language Processing"
     ],
-    "thumbnail": "/assets/thumbnails/placeholder.png",
-    "url": "/works/building-a-graph-neural-network-for-molecular-generation.html",
+    "thumbnail": "/assets/thumbnails/whatsapp-chat-analyzer.png",
+    "url": "/works/whatsapp-chat-analyzer.html",
     "readingTime": 1
   },
   {
-    "title": "Understanding Diffusion Models for Image Generation",
-    "subtitle": "A practical introduction to denoising diffusion probabilistic models and their application in medical imaging.",
-    "date": "2024-10-20",
-    "type": "blog",
+    "title": "df1sh - A F1 Data Analysis Tool ",
+    "subtitle": "Analyze Driver and Team Points and Positions and Compare Performance",
+    "date": "2024-12-27",
+    "type": "project",
     "tags": [
-      "ML",
-      "Computer Vision",
-      "Diffusion",
-      "Medical"
+      "Python",
+      "Data Analytics"
     ],
-    "thumbnail": "/assets/thumbnails/placeholder.png",
-    "url": "/works/understanding-diffusion-models-for-image-generation.html",
-    "readingTime": 2
+    "thumbnail": "/assets/thumbnails/df1sh.png",
+    "url": "/works/df1sh-a-f1-data-analysis-tool.html",
+    "readingTime": 1
   },
   {
     "title": "Towards Fair and Accurate Medical Image Embeddings",
@@ -54,6 +51,21 @@
     ],
     "thumbnail": "/assets/thumbnails/placeholder.png",
     "url": "/works/towards-fair-and-accurate-medical-image-embeddings.html",
-    "readingTime": 2
+    "readingTime": 1
+  },
+  {
+    "title": "Empirical weather dependency of heat pump load: Disentangling the effects of heat demand and efficiency",
+    "subtitle": "Analyzing heat pump load and efficiency variability using empirical UK datasets.",
+    "date": "2023-07-03",
+    "type": "publication",
+    "tags": [
+      "Energy",
+      "Heat Pump",
+      "Weather",
+      "Regression"
+    ],
+    "thumbnail": "/assets/thumbnails/placeholder.png",
+    "url": "/works/empirical-weather-dependency-of-heat-pump-load-disentangling-the-effects-of-heat-demand-and-efficiency.html",
+    "readingTime": 1
   }
 ]
