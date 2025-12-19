@@ -1,5 +1,5 @@
 ---
-title: "Empirical weather dependency of heat pump load: Disentangling the effects of heat demand and efficiency"
+title: "Empirical weather dependency of heat pump load"
 subtitle: "Analyzing heat pump load and efficiency variability using empirical UK datasets."
 date: 2023-07-03
 type: publication

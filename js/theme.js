@@ -66,7 +66,4 @@
     } else {
         init();
     }
-
-    // Apply theme before paint to prevent flash
-    applyTheme(getStoredTheme());
 })();

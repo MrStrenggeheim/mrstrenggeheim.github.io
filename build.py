@@ -39,6 +39,13 @@ ARTICLE_TEMPLATE = """<!DOCTYPE html>
   <meta name="description" content="{subtitle}">
   <title>{title} - Florian Hunecke</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script>
+    (function() {{
+      var stored = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', stored || (prefersDark ? 'dark' : 'light'));
+    }})();
+  </script>
   <!-- Prism.js for syntax highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/{prism_theme}.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
@@ -364,6 +371,13 @@ CV_TEMPLATE = """<!DOCTYPE html>
         content="Curriculum Vitae of Florian Hunecke - Education, Work Experience, and Achievements.">
     <title>CV - Florian Hunecke</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script>
+      (function() {{
+        var stored = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', stored || (prefersDark ? 'dark' : 'light'));
+      }})();
+    </script>
     <link rel="stylesheet" href="/css/style.css">
     <script src="/js/theme.js" defer></script>
 </head>

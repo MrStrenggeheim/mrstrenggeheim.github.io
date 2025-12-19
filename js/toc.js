@@ -9,7 +9,7 @@
 
     if (!tocList || !articleContent) return;
 
-    const headings = articleContent.querySelectorAll('h2, h3');
+    const headings = articleContent.querySelectorAll('h1, h2, h3');
     const tocItems = [];
 
     // Generate TOC
