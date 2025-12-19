@@ -665,6 +665,7 @@ img {
 /* Search Input */
 .works__search {
   flex: 1;
+  min-width: 50%;
   position: relative;
 }
 
@@ -969,17 +970,15 @@ img {
 
 .works__filter-toggle,
 .works__mobile-clear {
-  height: var(--control-height);
-  padding: 0 var(--space-md);
+  padding: var(--space-sm);
   background-color: var(--bg-secondary);
   border: none;
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  justify-content: center;
 }
 
 .works__filter-toggle:hover,
@@ -988,21 +987,26 @@ img {
   background-color: var(--bg-tertiary);
 }
 
+.works__filter-toggle.active {
+  background-color: var(--accent-bg);
+  color: var(--bg-primary);
+}
+
 .works__filter-toggle svg,
 .works__mobile-clear svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 .works__mobile-clear {
-  visibility: hidden;
-  opacity: 0;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition: opacity 0.2s ease, color 0.2s ease;
 }
 
-.works__mobile-clear.visible {
-  visibility: visible;
-  opacity: 1;
+.works__mobile-clear.disabled,
+.works__mobile-clear:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 /* Filter overlay - hidden by default */

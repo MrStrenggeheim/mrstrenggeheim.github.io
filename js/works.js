@@ -63,22 +63,27 @@
         if (searchClearBtn) {
             searchClearBtn.classList.toggle('visible', searchQuery.length > 0);
         }
-        // Clear all button - visible when any filter is active
-        const hasActiveFilters = currentType !== 'all' || currentTags.length > 0 || searchQuery.length > 0;
+        // Clear all button - visible/enabled when type or tag filters are active (not search)
+        const hasActiveFilters = currentType !== 'all' || currentTags.length > 0;
         if (clearAllBtn) {
             clearAllBtn.classList.toggle('visible', hasActiveFilters);
         }
+        // Mobile clear button - always visible but disabled when no filters
         if (mobileClearBtn) {
-            mobileClearBtn.classList.toggle('visible', hasActiveFilters);
+            mobileClearBtn.disabled = !hasActiveFilters;
+            mobileClearBtn.classList.toggle('disabled', !hasActiveFilters);
+        }
+        // Filter toggle button - accent color when filters are active
+        if (filterToggleBtn) {
+            filterToggleBtn.classList.toggle('active', hasActiveFilters);
         }
     }
 
-    // Clear all filters
+    // Clear all filters (type and tags only, NOT search)
     function clearAllFilters() {
         currentType = 'all';
         currentTags = [];
-        searchQuery = '';
-        if (searchInput) searchInput.value = '';
+        // Note: We do NOT clear searchQuery here - that's handled by the search X button
         // Update both sidebar and overlay type pills
         typePills.forEach(p => p.classList.toggle('active', p.dataset.type === 'all'));
         overlayTypePills.forEach(p => p.classList.toggle('active', p.dataset.type === 'all'));
