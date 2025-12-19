@@ -21,6 +21,30 @@
     const viewBtns = document.querySelectorAll('.works__view-btn');
     const countDisplay = document.querySelector('.works__count');
 
+    // Mobile controls
+    const filterToggleBtn = document.querySelector('.works__filter-toggle');
+    const mobileClearBtn = document.querySelector('.works__mobile-clear');
+    const filterOverlay = document.querySelector('.works__filter-overlay');
+    const filterOverlayBackdrop = document.querySelector('.works__filter-overlay-backdrop');
+    const filterOverlayClose = document.querySelector('.works__filter-overlay-close');
+    const overlayTagContainer = document.querySelector('.works__overlay-tags');
+    const overlayTypePills = document.querySelectorAll('.works__overlay-types .works__filter-pill[data-type]');
+
+    // Open/close filter overlay
+    function openFilterOverlay() {
+        if (filterOverlay) {
+            filterOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeFilterOverlay() {
+        if (filterOverlay) {
+            filterOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+    }
+
     // Update URL params (snappy, no page reload)
     function updateUrlParams() {
         const params = new URLSearchParams();
@@ -44,6 +68,9 @@
         if (clearAllBtn) {
             clearAllBtn.classList.toggle('visible', hasActiveFilters);
         }
+        if (mobileClearBtn) {
+            mobileClearBtn.classList.toggle('visible', hasActiveFilters);
+        }
     }
 
     // Clear all filters
@@ -52,7 +79,9 @@
         currentTags = [];
         searchQuery = '';
         if (searchInput) searchInput.value = '';
+        // Update both sidebar and overlay type pills
         typePills.forEach(p => p.classList.toggle('active', p.dataset.type === 'all'));
+        overlayTypePills.forEach(p => p.classList.toggle('active', p.dataset.type === 'all'));
         updateTagPills();
         updateUrlParams();
         render();
@@ -103,6 +132,7 @@
             // Update UI to reflect URL state
             if (currentType !== 'all') {
                 typePills.forEach(p => p.classList.toggle('active', p.dataset.type === currentType));
+                overlayTypePills.forEach(p => p.classList.toggle('active', p.dataset.type === currentType));
             }
             if (currentView !== 'list') {
                 viewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
@@ -131,12 +161,10 @@
         return tagCounts;
     }
 
-    // Render tag filter pills
+    // Render tag filter pills (in both containers)
     function renderTags() {
-        if (!tagContainer) return;
-
         const tagCounts = getAllTags();
-        tagContainer.innerHTML = Object.entries(tagCounts)
+        const tagsHtml = Object.entries(tagCounts)
             .sort((a, b) => b[1] - a[1])
             .map(([tag, count]) => `
         <button class="works__filter-pill" data-tag="${tag}">
@@ -144,14 +172,27 @@
         </button>
       `).join('');
 
-        // Add click handlers
-        tagContainer.querySelectorAll('.works__filter-pill').forEach(pill => {
-            pill.addEventListener('click', (e) => {
-                e.preventDefault();
-                const tag = pill.dataset.tag;
-                toggleTag(tag);
+        // Render in sidebar
+        if (tagContainer) {
+            tagContainer.innerHTML = tagsHtml;
+            tagContainer.querySelectorAll('.works__filter-pill').forEach(pill => {
+                pill.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleTag(pill.dataset.tag);
+                });
             });
-        });
+        }
+
+        // Render in overlay
+        if (overlayTagContainer) {
+            overlayTagContainer.innerHTML = tagsHtml;
+            overlayTagContainer.querySelectorAll('.works__filter-pill').forEach(pill => {
+                pill.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleTag(pill.dataset.tag);
+                });
+            });
+        }
     }
 
     // Toggle tag selection
@@ -167,13 +208,17 @@
         render();
     }
 
-    // Update tag pill active states
+    // Update tag pill active states (in both containers)
     function updateTagPills() {
-        if (!tagContainer) return;
-        tagContainer.querySelectorAll('.works__filter-pill').forEach(pill => {
-            const isActive = currentTags.includes(pill.dataset.tag);
-            pill.classList.toggle('active', isActive);
-        });
+        const updateContainer = (container) => {
+            if (!container) return;
+            container.querySelectorAll('.works__filter-pill').forEach(pill => {
+                const isActive = currentTags.includes(pill.dataset.tag);
+                pill.classList.toggle('active', isActive);
+            });
+        };
+        updateContainer(tagContainer);
+        updateContainer(overlayTagContainer);
     }
 
     // Filter works
@@ -255,6 +300,16 @@
         });
     }
 
+    // Handle type filter click (for both sidebar and overlay)
+    function handleTypeClick(pill) {
+        currentType = pill.dataset.type;
+        // Sync both sidebar and overlay
+        typePills.forEach(p => p.classList.toggle('active', p.dataset.type === currentType));
+        overlayTypePills.forEach(p => p.classList.toggle('active', p.dataset.type === currentType));
+        updateUrlParams();
+        render();
+    }
+
     // Set up event listeners
     function setupListeners() {
         // Search
@@ -276,19 +331,42 @@
             });
         }
 
-        // Clear all filters button
+        // Clear all filters button (sidebar)
         if (clearAllBtn) {
             clearAllBtn.addEventListener('click', clearAllFilters);
         }
 
-        // Type filters
+        // Mobile clear button
+        if (mobileClearBtn) {
+            mobileClearBtn.addEventListener('click', clearAllFilters);
+        }
+
+        // Mobile filter toggle
+        if (filterToggleBtn) {
+            filterToggleBtn.addEventListener('click', openFilterOverlay);
+        }
+
+        // Close overlay
+        if (filterOverlayClose) {
+            filterOverlayClose.addEventListener('click', closeFilterOverlay);
+        }
+        if (filterOverlayBackdrop) {
+            filterOverlayBackdrop.addEventListener('click', closeFilterOverlay);
+        }
+
+        // Type filters (sidebar)
         typePills.forEach(pill => {
             pill.addEventListener('click', (e) => {
                 e.preventDefault();
-                currentType = pill.dataset.type;
-                typePills.forEach(p => p.classList.toggle('active', p === pill));
-                updateUrlParams();
-                render();
+                handleTypeClick(pill);
+            });
+        });
+
+        // Type filters (overlay)
+        overlayTypePills.forEach(pill => {
+            pill.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleTypeClick(pill);
             });
         });
 
@@ -314,3 +392,4 @@
         init();
     }
 })();
+

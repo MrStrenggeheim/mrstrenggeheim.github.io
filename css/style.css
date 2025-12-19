@@ -46,6 +46,7 @@
   --header-height-total: calc(var(--header-height) + var(--header-border));
   --sidebar-width: 250px;
   --content-padding: 2rem;
+  --control-height: 2.5rem;
 }
 
 /* Dark theme (default) */
@@ -669,7 +670,8 @@ img {
 
 .works__search-input {
   width: 100%;
-  padding: var(--space-sm) var(--space-md);
+  height: var(--control-height);
+  padding: 0 var(--space-md);
   padding-right: 2.5rem;
   background-color: var(--bg-secondary);
   border: none;
@@ -750,28 +752,22 @@ img {
 /* Sidebar Filters */
 .works__clear-all {
   width: 100%;
-  padding: var(--space-sm) var(--space-md);
+  height: var(--control-height);
+  padding: 0 var(--space-md);
   margin-bottom: var(--space-lg);
   background-color: transparent;
   border: 1px solid var(--border);
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  visibility: hidden;
   opacity: 0;
-  pointer-events: none;
-  height: 0;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
 }
 
 .works__clear-all.visible {
+  visibility: visible;
   opacity: 1;
-  pointer-events: auto;
-  height: auto;
-  padding: var(--space-sm) var(--space-md);
-  margin-bottom: var(--space-lg);
 }
 
 .works__clear-all:hover {
@@ -965,6 +961,113 @@ img {
   padding: var(--space-md) var(--space-lg);
 }
 
+/* Mobile filter controls - hidden on desktop */
+.works__mobile-controls {
+  display: none;
+  gap: var(--space-sm);
+}
+
+.works__filter-toggle,
+.works__mobile-clear {
+  height: var(--control-height);
+  padding: 0 var(--space-md);
+  background-color: var(--bg-secondary);
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.works__filter-toggle:hover,
+.works__mobile-clear:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-tertiary);
+}
+
+.works__filter-toggle svg,
+.works__mobile-clear svg {
+  width: 16px;
+  height: 16px;
+}
+
+.works__mobile-clear {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.works__mobile-clear.visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Filter overlay - hidden by default */
+.works__filter-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+}
+
+.works__filter-overlay.open {
+  display: flex;
+}
+
+.works__filter-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.works__filter-overlay-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(320px, 85vw);
+  background-color: var(--bg-primary);
+  padding: var(--space-lg);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.works__filter-overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.works__filter-overlay-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.works__filter-overlay-close {
+  background: none;
+  border: none;
+  padding: var(--space-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.works__filter-overlay-close:hover {
+  color: var(--text-primary);
+}
+
+.works__filter-overlay-close svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
 /* Responsive: Tablet (< 1024px) */
 @media (max-width: 1024px) {
   .works__grid.gallery {
@@ -976,17 +1079,21 @@ img {
 @media (max-width: 900px) {
   .works {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto 1fr;
     grid-template-areas:
       "header"
       "topbar"
-      "sidebar"
       "main";
   }
 
+  /* Hide desktop sidebar on mobile */
   .works__sidebar {
-    position: static;
-    grid-row: auto;
+    display: none;
+  }
+
+  /* Show mobile controls */
+  .works__mobile-controls {
+    display: flex;
   }
 
   .works__filter-pills {
