@@ -282,7 +282,8 @@ def build_works():
             work_type = type_dir
             
             # Generate slug and URL
-            slug = slugify(title)
+            # Use filename as slug source to ensure stable URLs regardless of title changes
+            slug = slugify(md_file.stem)
             url = f"/works/{slug}.html"
             
             # Calculate reading time

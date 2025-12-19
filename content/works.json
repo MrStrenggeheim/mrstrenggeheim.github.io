@@ -1,41 +1,47 @@
 [
   {
-    "title": "Technik & Recht",
-    "subtitle": "A practical introduction to denoising diffusion probabilistic models and their application in medical imaging.",
-    "date": "Thu Aug 02 2021",
-    "type": "blog",
+    "title": "Segmentation Guided Diffusion",
+    "subtitle": "Medical Image Generation from Segmentation Masks",
+    "date": "2025-12-19",
+    "type": "project",
     "tags": [
-      "IT"
+      "Python",
+      "Deep Learning",
+      "Medical Imaging",
+      "Diffusion Models"
     ],
-    "thumbnail": "/assets/thumbnails/placeholder.png",
-    "url": "/works/technik-recht.html",
-    "readingTime": 58
+    "thumbnail": "/assets/thumbnails/segguideddif.png",
+    "url": "/works/adlm-diffusion.html",
+    "readingTime": 1
   },
   {
     "title": "WhatsApp Chat Analyzer",
-    "subtitle": "A chat analyzer for WhatsApp chats.",
+    "subtitle": "Insights and Visualizations for WhatsApp Chats",
     "date": "2025-11-03",
     "type": "project",
     "tags": [
       "Python",
       "Data Analytics",
-      "Natural Language Processing"
+      "NLP",
+      "Visualization"
     ],
     "thumbnail": "/assets/thumbnails/whatsapp-chat-analyzer.png",
     "url": "/works/whatsapp-chat-analyzer.html",
     "readingTime": 1
   },
   {
-    "title": "df1sh - A F1 Data Analysis Tool ",
-    "subtitle": "Analyze Driver and Team Points and Positions and Compare Performance",
+    "title": "df1sh",
+    "subtitle": "A Formula 1 Analytics Dashboard",
     "date": "2024-12-27",
     "type": "project",
     "tags": [
       "Python",
-      "Data Analytics"
+      "Streamlit",
+      "Data Analytics",
+      "Visualization"
     ],
     "thumbnail": "/assets/thumbnails/df1sh.png",
-    "url": "/works/df1sh-a-f1-data-analysis-tool.html",
+    "url": "/works/df1sh.html",
     "readingTime": 1
   },
   {
@@ -47,10 +53,10 @@
       "ML",
       "Medical",
       "Fairness",
-      "Computer Vision"
+      "CV"
     ],
-    "thumbnail": "/assets/thumbnails/placeholder.png",
-    "url": "/works/towards-fair-and-accurate-medical-image-embeddings.html",
+    "thumbnail": "/assets/thumbnails/image-embeddings.png",
+    "url": "/works/fair-medical-embeddings.html",
     "readingTime": 1
   },
   {
@@ -60,12 +66,22 @@
     "type": "publication",
     "tags": [
       "Energy",
-      "Heat Pump",
-      "Weather",
       "Regression"
     ],
-    "thumbnail": "/assets/thumbnails/placeholder.png",
-    "url": "/works/empirical-weather-dependency-of-heat-pump-load.html",
+    "thumbnail": "/assets/thumbnails/heatpump.png",
+    "url": "/works/heatpump-load.html",
     "readingTime": 1
+  },
+  {
+    "title": "Technik & Recht",
+    "subtitle": "A practical introduction to denoising diffusion probabilistic models and their application in medical imaging.",
+    "date": "2021-08-02",
+    "type": "blog",
+    "tags": [
+      "IT"
+    ],
+    "thumbnail": "/assets/thumbnails/placeholder.png",
+    "url": "/works/technik.html",
+    "readingTime": 58
   }
 ]

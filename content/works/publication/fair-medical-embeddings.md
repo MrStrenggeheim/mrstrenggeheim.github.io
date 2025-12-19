@@ -3,8 +3,8 @@ title: "Towards Fair and Accurate Medical Image Embeddings"
 subtitle: "Bachelor's thesis on developing bias-aware representation learning methods for medical imaging applications."
 date: 2024-04-15
 type: publication
-tags: [ML, Medical, Fairness, Computer Vision]
-thumbnail: /assets/thumbnails/placeholder.png
+tags: [ML, Medical, Fairness, CV]
+thumbnail: /assets/thumbnails/image-embeddings.png
 links:
   Paper: https://arxiv.org/abs/2410.10220
   Thesis: ../../../assets/tum_thesis_image_embeddings.pdf

@@ -3,8 +3,8 @@ title: "Empirical weather dependency of heat pump load"
 subtitle: "Analyzing heat pump load and efficiency variability using empirical UK datasets."
 date: 2023-07-03
 type: publication
-tags: [Energy, Heat Pump, Weather, Regression]
-thumbnail: /assets/thumbnails/placeholder.png
+tags: [Energy, Regression]
+thumbnail: /assets/thumbnails/heatpump.png
 links:
   Paper: https://ieeexplore.ieee.org/document/10161914
 ---

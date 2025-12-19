@@ -131,6 +131,9 @@
             const response = await fetch('/content/works.json');
             works = await response.json();
 
+            // Ensure sorted by date descending
+            works.sort((a, b) => new Date(b.date) - new Date(a.date));
+
             // Read URL params
             readUrlParams();
 
