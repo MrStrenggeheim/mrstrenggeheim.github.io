@@ -203,14 +203,19 @@ ARTICLE_TEMPLATE = """<!DOCTYPE html>
       <article class="article">
         <div class="article__main">
           <header class="article__header">
-            <h1 class="article__title">{title}</h1>
-            <div class="article__meta">
-              <span class="article__type">{type}</span>
-              <span>{date}</span>
-              <span>{reading_time} min read</span>
-            </div>
-            <div class="article__tags">
-              {tags_html}
+            <div class="article__banner">
+              <img class="article__banner-img" src="{thumbnail}" alt="{title}">
+              <div class="article__banner-overlay">
+                <h1 class="article__title">{title}</h1>
+                <div class="article__meta">
+                  <span class="article__type">{type}</span>
+                  <span>{date}</span>
+                  <span>{reading_time} min read</span>
+                </div>
+                <div class="article__tags">
+                  {tags_html}
+                </div>
+              </div>
             </div>
             {external_links_html}
           </header>
@@ -503,6 +508,7 @@ def build_works():
             article_html = ARTICLE_TEMPLATE.format(
                 title=title,
                 subtitle=subtitle,
+                thumbnail=thumbnail,
                 type=work_type,
                 date=format_date(date),
                 reading_time=reading_time,

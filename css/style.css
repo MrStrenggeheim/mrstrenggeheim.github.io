@@ -353,13 +353,18 @@ img {
    ============================================ */
 .main {
   flex: 1;
-  /* margin-top: var(--header-height); */
+  margin-top: var(--header-height-total);
+}
+
+/* Landing page has its own full-viewport layout, no header offset needed */
+.main.landing-wrapper {
+  margin-top: 0;
 }
 
 .container {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-lg);
+  padding: 0 var(--space-lg) var(--space-lg) var(--space-lg);
 }
 
 /* ============================================
@@ -660,18 +665,15 @@ img {
 .works {
   display: grid;
   grid-template-columns: 1fr var(--sidebar-width);
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   grid-template-areas:
-    "header header"
     "topbar sidebar"
     "main sidebar";
   gap: var(--space-lg) var(--space-xl);
   align-items: start;
 }
 
-.works__header {
-  grid-area: header;
-}
+/* .works__header is now outside grid */
 
 .works__topbar {
   grid-area: topbar;
@@ -683,7 +685,6 @@ img {
 
 .works__sidebar {
   grid-area: sidebar;
-  grid-row: 2 / 4;
   position: sticky;
   top: calc(var(--header-height-total) + var(--space-xl));
   height: fit-content;
@@ -1160,9 +1161,8 @@ img {
 @media (max-width: 900px) {
   .works {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto 1fr;
     grid-template-areas:
-      "header"
       "topbar"
       "main";
   }
@@ -1227,7 +1227,7 @@ img {
   display: grid;
   grid-template-columns: 1fr var(--sidebar-width);
   gap: var(--space-xl);
-  padding-top: var(--space-xl);
+  padding-top: var(--space-lg);
 }
 
 .article__main {
@@ -1238,6 +1238,64 @@ img {
 
 .article__header {
   margin-bottom: var(--space-md);
+}
+
+/* Article Banner - Full-width with text overlay (matching gallery style) */
+.article__banner {
+  width: 100%;
+  aspect-ratio: 16 / 6;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: var(--space-lg);
+  border-radius: 4px;
+}
+
+.article__banner-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Text overlay with gradient that integrates into page background */
+.article__banner-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-lg);
+  padding-bottom: var(--space-md);
+  background: linear-gradient(to bottom, var(--gallery-overlay-start), var(--bg-primary));
+  backdrop-filter: blur(2px);
+}
+
+/* Mobile: Full-width banner without border-radius */
+@media (max-width: 768px) {
+  .article {
+    padding-top: 0;
+  }
+
+  .article__banner {
+    aspect-ratio: 4 / 3;
+    border-radius: 0;
+    /* margin-top: calc(-1 * var(--space-xl)); */
+    margin-left: calc(-1 * var(--space-lg));
+    margin-right: calc(-1 * var(--space-lg));
+    width: calc(100% + 2 * var(--space-lg));
+  }
+
+  .article__banner-overlay {
+    padding: var(--space-md);
+  }
+
+  .article__banner-overlay .article__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .article__banner-overlay .article__meta {
+    margin-bottom: var(--space-sm);
+  }
 }
 
 .article__type {
