@@ -56,6 +56,17 @@
         if (burger && navLinks) {
             burger.addEventListener('click', () => {
                 navLinks.classList.toggle('open');
+                document.body.classList.toggle('menu-open');
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (navLinks.classList.contains('open') &&
+                    !navLinks.contains(e.target) &&
+                    !burger.contains(e.target)) {
+                    navLinks.classList.remove('open');
+                    document.body.classList.remove('menu-open');
+                }
             });
         }
     }
