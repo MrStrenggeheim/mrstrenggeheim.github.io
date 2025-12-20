@@ -1083,14 +1083,20 @@ img {
 
 /* Filter overlay - hidden by default */
 .works__filter-overlay {
-  display: none;
+  display: flex;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
   position: fixed;
   inset: 0;
   z-index: 1001;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .works__filter-overlay.open {
-  display: flex;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .works__filter-overlay-backdrop {
@@ -1217,6 +1223,18 @@ img {
   .works__view-toggle {
     flex-shrink: 0;
     margin-left: auto;
+  }
+}
+
+/* Responsive: Very Small Mobile (<400px) - Hide filter text again */
+@media (max-width: 300px) {
+  .works__filter-toggle {
+    flex: 0 0 auto;
+    justify-content: center;
+  }
+
+  .works__filter-toggle-text {
+    display: none;
   }
 }
 

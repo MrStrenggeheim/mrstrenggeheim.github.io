@@ -6,7 +6,7 @@
     "type": "project",
     "tags": [
       "Python",
-      "Deep Learning",
+      "DL",
       "Medical",
       "Diffusion Models"
     ],
@@ -21,7 +21,7 @@
     "type": "project",
     "tags": [
       "Python",
-      "Data Analytics",
+      "Analytics",
       "NLP",
       "Visualization"
     ],
@@ -51,6 +51,7 @@
     "type": "publication",
     "tags": [
       "ML",
+      "DL",
       "Medical",
       "Fairness",
       "CV"

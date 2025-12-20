@@ -3,7 +3,7 @@ title: "WhatsApp Chat Analyzer"
 subtitle: "Insights and Visualizations for WhatsApp Chats"
 type: project
 date: 2025-11-03
-tags: [Python, Data Analytics, NLP, Visualization]
+tags: [Python, Analytics, NLP, Visualization]
 thumbnail: /assets/thumbnails/whatsapp-chat-analyzer.png
 links:
   GitHub: https://github.com/MrStrenggeheim/whatsapp-chat-analyzer
