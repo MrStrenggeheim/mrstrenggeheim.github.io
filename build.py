@@ -16,6 +16,10 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
+from urllib.request import urlopen, Request
+from urllib.error import URLError, HTTPError
+from html.parser import HTMLParser
+import socket
 
 import yaml
 import pypandoc
@@ -24,11 +28,105 @@ import pypandoc
 CONTENT_DIR = Path("content/works")
 OUTPUT_DIR = Path("works")
 INDEX_FILE = Path("content/works.json")
+LINK_CACHE_FILE = Path("content/link_cache.json")
 
 # Prism.js Theme - Change this to switch syntax highlighting theme
 # Options: prism, prism-dark, prism-funky, prism-okaidia, prism-twilight, 
 #          prism-coy, prism-solarizedlight, prism-tomorrow, prism-darcula
 PRISM_THEME = "prism-darcula"
+
+
+class OpenGraphParser(HTMLParser):
+    """Parse HTML to extract OpenGraph meta tags."""
+    
+    def __init__(self):
+        super().__init__()
+        self.og_data = {}
+        self.title = None
+        self.in_title = False
+    
+    def handle_starttag(self, tag, attrs):
+        if tag == 'title':
+            self.in_title = True
+        if tag == 'meta':
+            attrs_dict = dict(attrs)
+            # OpenGraph tags
+            if attrs_dict.get('property', '').startswith('og:'):
+                prop = attrs_dict['property'][3:]  # Remove 'og:' prefix
+                self.og_data[prop] = attrs_dict.get('content', '')
+            # Twitter card fallbacks
+            elif attrs_dict.get('name', '').startswith('twitter:'):
+                prop = attrs_dict['name'][8:]  # Remove 'twitter:' prefix
+                if prop not in self.og_data:
+                    self.og_data[prop] = attrs_dict.get('content', '')
+    
+    def handle_data(self, data):
+        if self.in_title:
+            self.title = data.strip()
+    
+    def handle_endtag(self, tag):
+        if tag == 'title':
+            self.in_title = False
+
+
+def load_link_cache() -> dict:
+    """Load cached OpenGraph data from file."""
+    if LINK_CACHE_FILE.exists():
+        try:
+            return json.loads(LINK_CACHE_FILE.read_text(encoding='utf-8'))
+        except (json.JSONDecodeError, IOError):
+            pass
+    return {}
+
+
+def save_link_cache(cache: dict):
+    """Save OpenGraph cache to file."""
+    LINK_CACHE_FILE.write_text(json.dumps(cache, indent=2), encoding='utf-8')
+
+
+def fetch_opengraph(url: str, cache: dict) -> dict | None:
+    """Fetch OpenGraph metadata from a URL with 3-second timeout.
+    
+    Returns dict with keys: title, description, image, or None on failure.
+    Uses cache to avoid repeated fetches.
+    """
+    # Check cache first
+    if url in cache:
+        return cache[url]
+    
+    try:
+        print(f"    Fetching OG data: {url}")
+        req = Request(
+            url,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (compatible; LinkPreview/1.0)',
+                'Accept': 'text/html',
+            }
+        )
+        # 3 second timeout
+        socket.setdefaulttimeout(3)
+        with urlopen(req, timeout=3) as response:
+            # Only read first 50KB to find meta tags
+            html = response.read(50000).decode('utf-8', errors='ignore')
+        
+        parser = OpenGraphParser()
+        parser.feed(html)
+        
+        og_data = {
+            'title': parser.og_data.get('title') or parser.title or '',
+            'description': parser.og_data.get('description', ''),
+            'image': parser.og_data.get('image', ''),
+        }
+        
+        # Cache the result
+        cache[url] = og_data
+        return og_data
+        
+    except (URLError, HTTPError, socket.timeout, Exception) as e:
+        print(f"    Failed to fetch OG data: {e}")
+        cache[url] = None  # Cache the failure too
+        return None
+
 
 # Article HTML template
 ARTICLE_TEMPLATE = """<!DOCTYPE html>
@@ -105,9 +203,9 @@ ARTICLE_TEMPLATE = """<!DOCTYPE html>
       <article class="article">
         <div class="article__main">
           <header class="article__header">
-            <span class="article__type">{type}</span>
             <h1 class="article__title">{title}</h1>
             <div class="article__meta">
+              <span class="article__type">{type}</span>
               <span>{date}</span>
               <span>{reading_time} min read</span>
             </div>
@@ -258,6 +356,9 @@ def build_works():
     # Create output directory
     OUTPUT_DIR.mkdir(exist_ok=True)
     
+    # Load link cache for OpenGraph data
+    link_cache = load_link_cache()
+    
     # Collect all markdown files
     works = []
     
@@ -299,26 +400,104 @@ def build_works():
                 for tag in tags
             ])
             
-            # Generate external links HTML (optional)
+            # Generate external links HTML with OpenGraph preview cards
             external_links = frontmatter.get("links", {})
             external_links_html = ""
             if external_links:
                 from urllib.parse import urlparse
+                import html
                 links_items = []
+                
+                # Arrow SVG icon for external links
+                arrow_svg = '<svg class="link-preview__arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>'
+                
+                # Fallback link icon SVG
+                fallback_icon_svg = '<svg class="link-preview__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+                
                 for name, link_url in external_links.items():
-                    # Parse URL to get domain
                     parsed = urlparse(link_url)
                     domain = parsed.netloc.lower()
+                    scheme = parsed.scheme or 'https'
                     
-                    # Use Google favicon service for all domains, with fallback link icon
-                    if domain:
-                        icon = f'<img src="https://www.google.com/s2/favicons?domain={domain}&sz=32" class="article__external-icon" alt="" onerror="this.style.display=\'none\'">'
+                    # Check if it's a valid external URL
+                    is_external = bool(domain) and scheme in ('http', 'https')
+                    
+                    # Try to fetch OpenGraph data only for external URLs
+                    og_data = fetch_opengraph(link_url, link_cache) if is_external else None
+                    
+                    # Create favicon HTML with multi-level fallback chain:
+                    # Google (64px) -> DuckDuckGo -> Link SVG icon
+                    if is_external:
+                        # DuckDuckGo favicon service (good transparent icons)
+                        ddg_favicon_url = f"https://icons.duckduckgo.com/ip3/{domain}.ico"
+                        # Google's favicon service with higher resolution (64px)
+                        google_favicon_url = f"https://www.google.com/s2/favicons?domain={domain}&sz=64"
+                        # Escape the SVG for use in JavaScript - replace quotes
+                        svg_escaped = fallback_icon_svg.replace('"', '&quot;').replace("'", "\\'")
+                        # Build onerror with proper escaping: first try DDG, then use SVG
+                        onerror_handler = f"this.onerror=function(){{this.outerHTML='{svg_escaped}'}};this.src='{ddg_favicon_url}';"
+                        favicon_html = f'<img class="link-preview__icon" src="{google_favicon_url}" alt="" onerror="{html.escape(onerror_handler, quote=True)}">'
                     else:
-                        # Fallback: simple link icon (only when domain can't be parsed)
-                        icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="article__external-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+                        favicon_html = fallback_icon_svg
                     
-                    links_items.append(f'<a href="{link_url}" class="article__external-link" target="_blank" rel="noopener">{icon} {name}</a>')
-                external_links_html = f'<div class="article__external-links">{"".join(links_items)}</div>'
+                    # Check if we have rich OG data with an actual image
+                    has_og_image = og_data and og_data.get('image', '').strip()
+                    has_og_title = og_data and og_data.get('title', '').strip()
+                    
+                    if has_og_image:
+                        # Rich preview card with OpenGraph image
+                        og_title = html.escape(og_data.get('title', name)[:60])
+                        og_desc = html.escape(og_data.get('description', '')[:100])
+                        og_image = og_data.get('image', '')
+                        
+                        # Make relative image URLs absolute
+                        if og_image and og_image.startswith('/'):
+                            og_image = f"{scheme}://{domain}{og_image}"
+                        
+                        image_html = f'<img class="link-preview__image" src="{og_image}" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+                        desc_html = f'<span class="link-preview__desc">{og_desc}</span>' if og_desc else ''
+                        
+                        card = f'''<a class="link-preview" href="{link_url}" target="_blank" rel="noopener">
+                            {image_html}
+                            <div class="link-preview__content">
+                                <span class="link-preview__title">{og_title}</span>
+                                {desc_html}
+                                <span class="link-preview__domain">{domain}</span>
+                            </div>
+                            {arrow_svg}
+                        </a>'''
+                    elif has_og_title:
+                        # Has OG title but no image - use favicon + OG title
+                        og_title = html.escape(og_data.get('title', name)[:60])
+                        og_desc = html.escape(og_data.get('description', '')[:100])
+                        desc_html = f'<span class="link-preview__desc">{og_desc}</span>' if og_desc else ''
+                        domain_html = f'<span class="link-preview__domain">{domain}</span>' if is_external else ''
+                        
+                        card = f'''<a class="link-preview link-preview--fallback" href="{link_url}" target="_blank" rel="noopener">
+                            {favicon_html}
+                            <div class="link-preview__content">
+                                <span class="link-preview__title">{og_title}</span>
+                                {desc_html}
+                                {domain_html}
+                            </div>
+                            {arrow_svg}
+                        </a>'''
+                    else:
+                        # No OG data at all - use favicon + link name
+                        domain_html = f'<span class="link-preview__domain">{domain}</span>' if is_external else ''
+                        
+                        card = f'''<a class="link-preview link-preview--fallback" href="{link_url}" target="_blank" rel="noopener">
+                            {favicon_html}
+                            <div class="link-preview__content">
+                                <span class="link-preview__title">{html.escape(name)}</span>
+                                {domain_html}
+                            </div>
+                            {arrow_svg}
+                        </a>'''
+                    
+                    links_items.append(card)
+                
+                external_links_html = f'<div class="article__link-previews">{"".join(links_items)}</div>'
             
             # Generate article HTML
             article_html = ARTICLE_TEMPLATE.format(
@@ -357,6 +536,9 @@ def build_works():
     CONTENT_DIR.mkdir(parents=True, exist_ok=True)
     INDEX_FILE.write_text(json.dumps(works, indent=2), encoding="utf-8")
     print(f"📋 Generated index: {INDEX_FILE} ({len(works)} works)")
+    
+    # Save link cache
+    save_link_cache(link_cache)
     
     print("✅ Works build complete!")
 
