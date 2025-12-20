@@ -8,7 +8,7 @@
     let works = [];
     let currentType = 'all';
     let currentTags = [];
-    let currentView = 'list';
+    let currentView = 'gallery';
     let searchQuery = '';
 
     // DOM Elements
@@ -51,7 +51,7 @@
         if (currentType !== 'all') params.set('type', currentType);
         if (currentTags.length > 0) params.set('tags', currentTags.join(','));
         if (searchQuery) params.set('q', searchQuery);
-        if (currentView !== 'list') params.set('view', currentView);
+        if (currentView !== 'gallery') params.set('view', currentView);
         const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
         history.replaceState(null, '', newUrl);
         updateClearButtonsVisibility();
@@ -142,7 +142,7 @@
                 typePills.forEach(p => p.classList.toggle('active', p.dataset.type === currentType));
                 overlayTypePills.forEach(p => p.classList.toggle('active', p.dataset.type === currentType));
             }
-            if (currentView !== 'list') {
+            if (currentView !== 'gallery') {
                 viewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
             }
 
