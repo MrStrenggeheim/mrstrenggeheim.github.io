@@ -928,7 +928,8 @@ img {
 }
 
 .works__grid.gallery {
-  grid-template-columns: repeat(3, 1fr);
+  /* change here for default column count */
+  grid-template-columns: repeat(2, 1fr);
   grid-auto-rows: 1fr;
 }
 
