@@ -27,8 +27,8 @@ import pypandoc
 # Configuration
 CONTENT_DIR = Path("content/works")
 OUTPUT_DIR = Path("works")
-INDEX_FILE = Path("content/works.json")
-LINK_CACHE_FILE = Path("content/link_cache.json")
+INDEX_FILE = OUTPUT_DIR / "works.json"
+LINK_CACHE_FILE = OUTPUT_DIR / "link_cache.json"
 COMPONENTS_DIR = Path("components")
 
 # Prism.js Theme - Change this to switch syntax highlighting theme

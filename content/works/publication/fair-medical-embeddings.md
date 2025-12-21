@@ -7,7 +7,7 @@ tags: [ML, DL, Medical, Fairness, CV]
 thumbnail: /assets/thumbnails/image-embeddings.png
 links:
   Paper: https://arxiv.org/abs/2410.10220
-  Thesis: ../../../assets/tum_thesis_image_embeddings.pdf
+  Thesis: ../../../assets/misc/tum_thesis_image_embeddings.pdf
 ---
 
 # Abstract

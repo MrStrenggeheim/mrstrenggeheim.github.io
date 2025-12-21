@@ -125,7 +125,7 @@
     // Initialize
     async function init() {
         try {
-            const response = await fetch('/content/works.json');
+            const response = await fetch('/works/works.json');
             works = await response.json();
 
             // Ensure sorted by date descending
