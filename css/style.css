@@ -52,6 +52,14 @@
   --sidebar-width: 250px;
   --content-padding: 2rem;
   --control-height: 2.5rem;
+
+  /* Breakpoints - consolidated from 6 to 3 */
+  --bp-sm: 480px;
+  /* Small: very small mobile */
+  --bp-md: 768px;
+  /* Medium: tablets, large phones */
+  --bp-lg: 1024px;
+  /* Large: desktop */
 }
 
 /* Dark theme (default) */
@@ -139,6 +147,40 @@ a:hover {
 img {
   max-width: 100%;
   height: auto;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Text truncation with ellipsis - use with data-lines="N" or override --line-clamp */
+.text-truncate {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  --line-clamp: 1;
+  -webkit-line-clamp: var(--line-clamp);
+  line-clamp: var(--line-clamp);
+}
+
+.text-truncate-2 {
+  --line-clamp: 2;
+}
+
+.text-truncate-3 {
+  --line-clamp: 3;
+}
+
+/* Card base - shared by work-card, link-preview */
+.card {
+  background-color: var(--bg-secondary);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  background-color: var(--bg-tertiary);
 }
 
 /* ============================================
@@ -551,25 +593,12 @@ img {
 .page-title {
   font-size: var(--font-size-2xl);
   font-weight: 700;
-  color: var(--text-primary);
   margin: var(--space-lg) 0;
-  letter-spacing: -0.02em;
   position: relative;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: var(--text-secondary);
 }
-
-/* .page-title::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(to right, var(--accent), transparent);
-  opacity: 0.5;
-} */
 
 .cv__section {
   margin-bottom: var(--space-md);
@@ -738,7 +767,8 @@ img {
   transition: opacity 0.2s ease, color 0.2s ease;
 }
 
-.works__search-clear.visible {
+/* CSS-only visibility: show when input has content (not showing placeholder) */
+.works__search-input:not(:placeholder-shown)+.works__search-clear {
   opacity: 1;
   pointer-events: auto;
 }
@@ -1156,15 +1186,12 @@ img {
   display: block;
 }
 
-/* Responsive: Tablet (< 1024px) */
+/* Responsive: Tablet/Mobile (< 1024px) */
 @media (max-width: 1024px) {
   .works__grid.gallery {
     grid-template-columns: repeat(2, 1fr);
   }
-}
 
-/* Responsive: Mobile (< 900px) - Stack layout */
-@media (max-width: 900px) {
   .works {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
@@ -1189,8 +1216,8 @@ img {
   }
 }
 
-/* Responsive: Small Mobile (< 640px) */
-@media (max-width: 640px) {
+/* Responsive: Small Mobile (< 480px) - 1-col gallery, compact controls */
+@media (max-width: 480px) {
   .works__grid.gallery {
     grid-template-columns: 1fr;
   }
@@ -1205,29 +1232,11 @@ img {
     min-width: 100%;
   }
 
-  /* Filter button expands with text */
+  /* Filter controls compact on small screens */
   .works__mobile-controls {
     flex: 1;
   }
 
-  .works__filter-toggle {
-    flex: 1;
-    justify-content: flex-start;
-    gap: var(--space-sm);
-  }
-
-  .works__filter-toggle-text {
-    display: inline;
-  }
-
-  .works__view-toggle {
-    flex-shrink: 0;
-    margin-left: auto;
-  }
-}
-
-/* Responsive: Very Small Mobile (<400px) - Hide filter text again */
-@media (max-width: 300px) {
   .works__filter-toggle {
     flex: 0 0 auto;
     justify-content: center;
@@ -1235,6 +1244,11 @@ img {
 
   .works__filter-toggle-text {
     display: none;
+  }
+
+  .works__view-toggle {
+    flex-shrink: 0;
+    margin-left: auto;
   }
 }
 
@@ -1813,78 +1827,6 @@ code[class*="language-"] {
   tab-size: 4;
 }
 
-/* Commented out - these overrides were for Prism Tomorrow theme
-   Duotone Dark theme has its own colors that work better */
-/*
-[data-theme="dark"] pre[class*="language-"] {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-[data-theme="light"] pre[class*="language-"] {
-  background-color: #fafafa;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-[data-theme="light"] code[class*="language-"] {
-  color: #383a42;
-}
-
-[data-theme="light"] .token.comment,
-[data-theme="light"] .token.prolog,
-[data-theme="light"] .token.doctype,
-[data-theme="light"] .token.cdata {
-  color: #a0a1a7;
-}
-
-[data-theme="light"] .token.punctuation {
-  color: #383a42;
-}
-
-[data-theme="light"] .token.property,
-[data-theme="light"] .token.tag,
-[data-theme="light"] .token.boolean,
-[data-theme="light"] .token.number,
-[data-theme="light"] .token.constant,
-[data-theme="light"] .token.symbol {
-  color: #986801;
-}
-
-[data-theme="light"] .token.selector,
-[data-theme="light"] .token.attr-name,
-[data-theme="light"] .token.string,
-[data-theme="light"] .token.char,
-[data-theme="light"] .token.builtin {
-  color: #50a14f;
-}
-
-[data-theme="light"] .token.operator,
-[data-theme="light"] .token.entity,
-[data-theme="light"] .token.url,
-[data-theme="light"] .language-css .token.string,
-[data-theme="light"] .style .token.string,
-[data-theme="light"] .token.variable {
-  color: #0184bc;
-}
-
-[data-theme="light"] .token.atrule,
-[data-theme="light"] .token.attr-value,
-[data-theme="light"] .token.keyword {
-  color: #a626a4;
-}
-
-[data-theme="light"] .token.function,
-[data-theme="light"] .token.class-name {
-  color: #4078f2;
-}
-
-[data-theme="light"] .token.regex,
-[data-theme="light"] .token.important {
-  color: #e45649;
-}
-*/
 
 /* Line numbers - non-selectable */
 .line-numbers .line-numbers-rows {

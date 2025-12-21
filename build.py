@@ -29,11 +29,45 @@ CONTENT_DIR = Path("content/works")
 OUTPUT_DIR = Path("works")
 INDEX_FILE = Path("content/works.json")
 LINK_CACHE_FILE = Path("content/link_cache.json")
+COMPONENTS_DIR = Path("components")
 
 # Prism.js Theme - Change this to switch syntax highlighting theme
 # Options: prism, prism-dark, prism-funky, prism-okaidia, prism-twilight, 
 #          prism-coy, prism-solarizedlight, prism-tomorrow, prism-darcula
 PRISM_THEME = "prism-darcula"
+
+
+def load_component(name: str) -> str:
+    """Load a component HTML file from the components directory."""
+    path = COMPONENTS_DIR / name
+    if path.exists():
+        return path.read_text(encoding='utf-8')
+    return f"<!-- Component {name} not found -->"
+
+
+def load_header(active_page: str = '') -> str:
+    """Load header component with active page highlighted.
+    
+    active_page: 'about', 'cv', or 'works'
+    """
+    header = load_component('_header.html')
+    # Set active class for the current page
+    header = header.format(
+        active_about=' active' if active_page == 'about' else '',
+        active_cv=' active' if active_page == 'cv' else '',
+        active_works=' active' if active_page == 'works' else ''
+    )
+    return header
+
+
+def load_footer() -> str:
+    """Load footer component."""
+    return load_component('_footer.html')
+
+
+def load_head() -> str:
+    """Load common head component (meta, favicon, theme script, CSS, JS)."""
+    return load_component('_head.html')
 
 
 class OpenGraphParser(HTMLParser):
@@ -173,29 +207,7 @@ ARTICLE_TEMPLATE = """<!DOCTYPE html>
   <script src="/js/code.js" defer></script>
 </head>
 <body>
-  <!-- Header -->
-  <header class="header">
-    <div class="header__container">
-      <a href="/" class="header__logo">FH</a>
-      <nav class="header__nav">
-        <button class="header__burger" aria-label="Toggle menu">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <ul class="header__nav-links">
-          <li><a href="/" class="header__nav-link">About</a></li>
-          <li><a href="/cv.html" class="header__nav-link">CV</a></li>
-          <li><a href="/works.html" class="header__nav-link active">Works</a></li>
-        </ul>
-        <button class="theme-toggle" aria-label="Toggle dark mode">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-          </svg>
-        </button>
-      </nav>
-    </div>
-  </header>
+  {header}
 
   <!-- Main Content -->
   <main class="main">
@@ -233,24 +245,7 @@ ARTICLE_TEMPLATE = """<!DOCTYPE html>
     </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer__container">
-      <p class="footer__copyright">© 2024 Florian Hunecke</p>
-      <div class="footer__links">
-        <a href="https://github.com/MrStrenggeheim" class="footer__link" aria-label="GitHub" target="_blank" rel="noopener">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-          </svg>
-        </a>
-        <a href="https://linkedin.com/in/florian-hunecke" class="footer__link" aria-label="LinkedIn" target="_blank" rel="noopener">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-          </svg>
-        </a>
-      </div>
-    </div>
-  </footer>
+  {footer}
 </body>
 </html>
 """
@@ -506,6 +501,8 @@ def build_works():
             
             # Generate article HTML
             article_html = ARTICLE_TEMPLATE.format(
+                header=load_header('works'),
+                footer=load_footer(),
                 title=title,
                 subtitle=subtitle,
                 thumbnail=thumbnail,
@@ -554,48 +551,14 @@ CV_TEMPLATE = """<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {head}
     <meta name="description"
         content="Curriculum Vitae of Florian Hunecke - Education, Work Experience, and Achievements.">
     <title>CV - Florian Hunecke</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <script>
-      (function() {{
-        var stored = localStorage.getItem('theme');
-        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.setAttribute('data-theme', stored || (prefersDark ? 'dark' : 'light'));
-      }})();
-    </script>
-    <link rel="stylesheet" href="/css/style.css">
-    <script src="/js/theme.js" defer></script>
 </head>
 
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header__container">
-            <a href="/" class="header__logo">FH</a>
-            <nav class="header__nav">
-                <button class="header__burger" aria-label="Toggle menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-                <ul class="header__nav-links">
-                    <li><a href="/" class="header__nav-link">About</a></li>
-                    <li><a href="/cv.html" class="header__nav-link active">CV</a></li>
-                    <li><a href="/works.html" class="header__nav-link">Works</a></li>
-                </ul>
-                <button class="theme-toggle" aria-label="Toggle dark mode">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                </button>
-            </nav>
-        </div>
-    </header>
+    {header}
 
     <!-- Main Content -->
     <main class="main">
@@ -610,28 +573,7 @@ CV_TEMPLATE = """<!DOCTYPE html>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer__container">
-            <p class="footer__copyright">© 2024 Florian Hunecke</p>
-            <div class="footer__links">
-                <a href="https://github.com/MrStrenggeheim" class="footer__link" aria-label="GitHub" target="_blank"
-                    rel="noopener">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                    </svg>
-                </a>
-                <a href="https://linkedin.com/in/florian-hunecke" class="footer__link" aria-label="LinkedIn"
-                    target="_blank" rel="noopener">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                            d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                    </svg>
-                </a>
-            </div>
-        </div>
-    </footer>
+    {footer}
 </body>
 
 </html>
@@ -716,7 +658,12 @@ def build_cv():
 """
     
     # Generate final HTML
-    cv_html = CV_TEMPLATE.format(sections_html=sections_html)
+    cv_html = CV_TEMPLATE.format(
+        head=load_head(),
+        header=load_header('cv'),
+        footer=load_footer(),
+        sections_html=sections_html
+    )
     
     # Write to cv.html
     output_path = Path("cv.html")
@@ -725,8 +672,49 @@ def build_cv():
     print("✅ CV build complete!")
 
 
+# Static pages configuration: (source_file, output_file, active_page)
+STATIC_PAGES = [
+    ("src/index.html", "index.html", "about"),
+    ("src/works.html", "works.html", "works"),
+    ("src/404.html", "404.html", ""),
+]
+
+
+def build_static_pages():
+    """Build static HTML pages from src/ templates with component injection."""
+    print("🔨 Building static pages...")
+    
+    src_dir = Path("src")
+    if not src_dir.exists():
+        print("  ⚠️ src/ directory not found, skipping static pages")
+        return
+    
+    for src_file, output_file, active_page in STATIC_PAGES:
+        src_path = Path(src_file)
+        if not src_path.exists():
+            print(f"  ⚠️ {src_file} not found, skipping")
+            continue
+        
+        # Read template
+        template = src_path.read_text(encoding="utf-8")
+        
+        # Inject components
+        html = template.format(
+            head=load_head(),
+            header=load_header(active_page),
+            footer=load_footer()
+        )
+        
+        # Write output
+        output_path = Path(output_file)
+        output_path.write_text(html, encoding="utf-8")
+        print(f"  -> Generated: {output_path}")
+    
+    print("✅ Static pages build complete!")
+
+
 if __name__ == "__main__":
     build_works()
     build_cv()
+    build_static_pages()
     print("\n🎉 All builds complete!")
-

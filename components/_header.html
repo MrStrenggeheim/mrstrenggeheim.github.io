@@ -1,0 +1,24 @@
+<!-- Header Component -->
+<!-- Usage: load_header(active_page) where active_page is 'about', 'cv', or 'works' -->
+<header class="header">
+    <div class="header__container">
+        <a href="/" class="header__logo">FH</a>
+        <nav class="header__nav">
+            <button class="header__burger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="header__nav-links">
+                <li><a href="/" class="header__nav-link{active_about}">About</a></li>
+                <li><a href="/cv.html" class="header__nav-link{active_cv}">CV</a></li>
+                <li><a href="/works.html" class="header__nav-link{active_works}">Works</a></li>
+            </ul>
+            <button class="theme-toggle" aria-label="Toggle dark mode">
+                <svg>
+                    <use href="/assets/icons.svg#icon-sun"></use>
+                </svg>
+            </button>
+        </nav>
+    </div>
+</header>

@@ -59,10 +59,7 @@
 
     // Update clear buttons visibility based on current filter state
     function updateClearButtonsVisibility() {
-        // Search clear X - visible when there's text in the search
-        if (searchClearBtn) {
-            searchClearBtn.classList.toggle('visible', searchQuery.length > 0);
-        }
+        // Note: Search clear X visibility is now CSS-only via :placeholder-shown
         // Clear all button - visible/enabled when type or tag filters are active (not search)
         const hasActiveFilters = currentType !== 'all' || currentTags.length > 0;
         if (clearAllBtn) {

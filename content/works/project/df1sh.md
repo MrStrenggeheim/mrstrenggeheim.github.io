@@ -3,7 +3,7 @@ title: "df1sh"
 subtitle: "A Formula 1 Analytics Dashboard"
 type: project
 date: 2024-12-27
-tags: [Python, Streamlit, Data Analytics, Visualization]
+tags: [Python, Streamlit, Analytics, Visualization]
 thumbnail: /assets/thumbnails/df1sh.png
 links:
   GitHub: https://github.com/MrStrenggeheim/df1sh
