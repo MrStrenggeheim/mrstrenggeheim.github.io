@@ -1261,11 +1261,15 @@ img {
 /* Article Banner - Full-width with text overlay (matching gallery style) */
 .article__banner {
   width: 100%;
-  aspect-ratio: 16 / 6;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-top: var(--space-2xl);
   position: relative;
   overflow: hidden;
   margin-bottom: var(--space-lg);
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 .article__banner-img {
@@ -1274,14 +1278,14 @@ img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: 0;
 }
 
 /* Text overlay with gradient that integrates into page background */
+
 .article__banner-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
+  z-index: 1;
   padding: var(--space-lg);
   padding-bottom: var(--space-md);
   background: linear-gradient(to bottom, var(--gallery-overlay-start), var(--bg-primary));
@@ -1295,7 +1299,7 @@ img {
   }
 
   .article__banner {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: auto;
     border-radius: 0;
     /* margin-top: calc(-1 * var(--space-xl)); */
     margin-left: calc(-1 * var(--space-lg));
