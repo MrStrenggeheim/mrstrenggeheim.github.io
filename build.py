@@ -446,8 +446,8 @@ def build_works():
                     
                     if has_og_image:
                         # Rich preview card with OpenGraph image
-                        og_title = html.escape(og_data.get('title', name)[:60])
-                        og_desc = html.escape(og_data.get('description', '')[:100])
+                        og_title = html.escape(og_data.get('title', name)[:200])
+                        og_desc = html.escape(og_data.get('description', '')[:300])
                         og_image = og_data.get('image', '')
                         
                         # Make relative image URLs absolute
@@ -468,8 +468,8 @@ def build_works():
                         </a>'''
                     elif has_og_title:
                         # Has OG title but no image - use favicon + OG title
-                        og_title = html.escape(og_data.get('title', name)[:60])
-                        og_desc = html.escape(og_data.get('description', '')[:100])
+                        og_title = html.escape(og_data.get('title', name)[:200])
+                        og_desc = html.escape(og_data.get('description', '')[:300])
                         desc_html = f'<span class="link-preview__desc">{og_desc}</span>' if og_desc else ''
                         domain_html = f'<span class="link-preview__domain">{domain}</span>' if is_external else ''
                         

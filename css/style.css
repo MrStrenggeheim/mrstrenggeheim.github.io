@@ -1386,12 +1386,11 @@ img {
   display: flex;
   flex-wrap: nowrap;
   gap: var(--space-md);
-  margin-top: var(--space-lg);
+  margin: var(--space-lg) var(--space-md) 0 var(--space-md);
   overflow-x: auto;
 }
 
-/* When there are only 1 or 2 cards, each should be 50% width */
-/* When there are 3+ cards, they share the full width equally */
+/* Flexible link previews: 1=100%, 2=50%, 3=33%, 4=25% */
 .link-preview {
   display: flex;
   align-items: center;
@@ -1401,16 +1400,12 @@ img {
   border-left: 3px solid var(--accent);
   text-decoration: none;
   transition: all 0.2s ease;
-  flex: 1 1 0;
-  min-width: 150px;
-  max-width: calc(50% - var(--space-md) / 2);
+  flex: 1;
+  /* Distribute space equally */
+  min-width: 0;
+  /* Allow shrinking to fit */
   min-height: 52px;
   box-sizing: border-box;
-}
-
-/* When more than 2 cards, allow them to shrink beyond 50% */
-.article__link-previews:has(.link-preview:nth-child(3)) .link-preview {
-  max-width: none;
 }
 
 .link-preview:hover {
@@ -1490,12 +1485,10 @@ img {
     flex-wrap: wrap;
   }
 
-  /* All cards are half width on mobile */
-  .link-preview,
-  .article__link-previews:has(.link-preview:nth-child(3)) .link-preview {
-    max-width: calc(50% - var(--space-md) / 2);
-    min-width: calc(50% - var(--space-md) / 2);
-    flex: 0 0 calc(50% - var(--space-md) / 2);
+  /* On mobile, wrapping is allowed if needed, but flex: 1 maintains equal widths */
+  .link-preview {
+    min-width: 140px;
+    /* Ensure 2 columns fit, but 4 might wrap */
   }
 }
 
