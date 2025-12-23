@@ -2,7 +2,7 @@
 title: "Segmentation Guided Diffusion"
 subtitle: "Medical Image Generation from Segmentation Masks"
 type: project
-date: 2025-12-19
+date: 2025-02-19
 tags: [Python, DL, Medical, Diffusion Models]
 thumbnail: /assets/thumbnails/segguideddif.png
 links:
