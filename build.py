@@ -362,13 +362,67 @@ def build_works():
     # Collect all markdown files
     works = []
     
+    import shutil
+    
+    def is_local_asset_link(link: str, asset_dir: Path) -> bool:
+        """Check if link refers to a local file in the asset directory."""
+        if not asset_dir:
+            return False
+        # Strip leading ./ if present
+        clean = link.lstrip('./')
+        # Check if it's a file in the asset directory (not a URL)
+        if '://' in link or link.startswith('/'):
+            # Could be absolute path to content dir
+            if link.startswith(str(asset_dir)) or link.startswith('/' + str(asset_dir)):
+                return True
+            return False
+        # Bare filename or relative path - check if file exists
+        return (asset_dir / clean).exists()
+    
     for type_dir in ["blog", "project", "publication"]:
         type_path = CONTENT_DIR / type_dir
         if not type_path.exists():
             continue
+            
+        print(f"📂 {type_dir}")
         
-        for md_file in type_path.glob("*.md"):
-            print(f"  Processing: {md_file}")
+        # Collect and sort entries for tree formatting
+        entries = []
+        for entry in type_path.iterdir():
+            if entry.name.startswith('.'): continue
+            if entry.is_file() and entry.suffix == '.md':
+                entries.append(entry)
+            elif entry.is_dir():
+                entries.append(entry)
+        entries.sort(key=lambda x: x.name)
+        
+        for i, entry in enumerate(entries):
+            is_last_entry = (i == len(entries) - 1)
+            # Use appropriate tree characters
+            tree_char = "└──" if is_last_entry else "├──"
+            
+            # Determine if single-file or bundled article
+            md_file = None
+            asset_dir = None
+            
+            if entry.is_file() and entry.suffix == '.md':
+                md_file = entry
+                slug = slugify(md_file.stem)
+            elif entry.is_dir():
+                slug = slugify(entry.name)
+                # Find index markdown: {folder}.md > index.md > first .md
+                md_file = entry / f"{entry.name}.md"
+                if not md_file.exists():
+                    md_file = entry / "index.md"
+                if not md_file.exists():
+                    md_files = list(entry.glob("*.md"))
+                    md_file = md_files[0] if md_files else None
+                if not md_file:
+                    continue  # Skip invalid directories
+                asset_dir = entry
+            
+            if not md_file:
+                 continue
             
             # Read and parse
             content = md_file.read_text(encoding="utf-8")
@@ -382,9 +436,7 @@ def build_works():
             thumbnail = frontmatter.get("thumbnail", "/assets/thumbnails/default.png")
             work_type = type_dir
             
-            # Generate slug and URL
-            # Use filename as slug source to ensure stable URLs regardless of title changes
-            slug = slugify(md_file.stem)
+            # URL for this article (slug already set above)
             url = f"/works/{slug}.html"
             
             # Calculate reading time
@@ -402,6 +454,17 @@ def build_works():
             
             # Generate external links HTML with OpenGraph preview cards
             external_links = frontmatter.get("links", {})
+            
+            # Resolve local asset links for bundled articles
+            if asset_dir and external_links:
+                for name, link_url in list(external_links.items()):
+                    if is_local_asset_link(link_url, asset_dir):
+                        clean = link_url.lstrip('./')
+                        # Extract just the filename if it's a full path
+                        if '/' in clean:
+                            clean = Path(clean).name
+                        external_links[name] = f"/works/{slug}/{clean}"
+            
             external_links_html = ""
             if external_links:
                 from urllib.parse import urlparse
@@ -517,8 +580,36 @@ def build_works():
             
             # Write article HTML file
             output_path = OUTPUT_DIR / f"{slug}.html"
-            output_path.write_text(article_html, encoding="utf-8")
-            print(f"  -> Generated: {output_path}")
+            try:
+                output_path.write_text(article_html, encoding="utf-8")
+                # Print success for the article
+                print(f"{tree_char} {md_file.name} -> {output_path.name} ✓")
+            except Exception:
+                print(f"{tree_char} {md_file.name} -> {output_path.name} ✗")
+                continue
+            
+            # Copy bundled assets to output directory
+            if asset_dir:
+                output_asset_dir = OUTPUT_DIR / slug
+                output_asset_dir.mkdir(exist_ok=True)
+                
+                # Collect assets to copy
+                assets = []
+                for asset in asset_dir.iterdir():
+                    if asset.suffix != '.md' and not asset.name.startswith('.'):
+                        assets.append(asset)
+                assets.sort(key=lambda x: x.name)
+                
+                folder_indent = "    " if is_last_entry else "│   "
+                
+                for j, asset in enumerate(assets):
+                    is_last_asset = (j == len(assets) - 1)
+                    asset_char = "└──" if is_last_asset else "├──"
+                    try:
+                        shutil.copy2(asset, output_asset_dir / asset.name)
+                        print(f"{folder_indent}{asset_char} {asset.name} ✓")
+                    except Exception:
+                        print(f"{folder_indent}{asset_char} {asset.name} ✗")
             
             # Add to index
             works.append({
@@ -668,7 +759,7 @@ def build_cv():
     # Write to cv.html
     output_path = Path("cv.html")
     output_path.write_text(cv_html, encoding="utf-8")
-    print(f"  -> Generated: {output_path}")
+    print(f"└── cv.yaml -> cv.html ✓")
     print("✅ CV build complete!")
 
 
@@ -708,7 +799,9 @@ def build_static_pages():
         # Write output
         output_path = Path(output_file)
         output_path.write_text(html, encoding="utf-8")
-        print(f"  -> Generated: {output_path}")
+        is_last = (src_file == STATIC_PAGES[-1][0])
+        char = "└──" if is_last else "├──"
+        print(f"{char} {src_path.name} -> {output_path.name} ✓")
     
     print("✅ Static pages build complete!")
 
