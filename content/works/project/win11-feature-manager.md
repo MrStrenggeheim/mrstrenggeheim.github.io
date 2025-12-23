@@ -3,7 +3,7 @@ title: "Windows 11 Feature Manager"
 subtitle: "A powerful PowerShell script to manage Windows 11 AI features, telemetry, and background services"
 type: project
 date: 2025-12-23
-tags: [PowerShell, Windows 11, System Tool, Optimization]
+tags: [PowerShell, Windows, Tool, Optimization]
 thumbnail: /assets/thumbnails/win11-feature-manager.png
 links:
   GitHub: https://github.com/MrStrenggeheim/win11-feature-manager

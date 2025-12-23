@@ -3,7 +3,7 @@ title: "Segmentation Guided Diffusion"
 subtitle: "Medical Image Generation from Segmentation Masks"
 type: project
 date: 2025-02-19
-tags: [Python, DL, Medical, Diffusion Models]
+tags: [Python, DL, Medical, Diffusion, CV]
 thumbnail: /assets/thumbnails/segguideddif.png
 links:
   GitHub: https://github.com/MrStrenggeheim/adlm-diffusion

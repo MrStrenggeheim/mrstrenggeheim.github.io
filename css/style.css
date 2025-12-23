@@ -951,8 +951,15 @@ img {
   text-decoration: none;
   cursor: pointer;
   height: 100%;
-  transition: background-color 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.3s ease, box-shadow 0.3s ease;
   position: relative;
+}
+
+.work-card:hover {
+  transform: translateY(-3px);
+  background-color: var(--bg-tertiary);
+  box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.2);
+  z-index: 1;
 }
 
 .work-card__thumbnail {
