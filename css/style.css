@@ -8,20 +8,20 @@
    ============================================ */
 :root {
   /* Light theme colors */
-  --bg-primary: #d2cdc6;
-  --bg-secondary: #c7c2bb;
-  --bg-tertiary: #aea69b;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f8fb;
+  --bg-tertiary: #e7eaf0;
   --text-primary: #1a1a1a;
   --text-secondary: #666666;
   --text-muted: #888888;
-  --accent: #d7801d;
+  --accent: #e7881c;
   --accent-hover: #b45309;
-  --accent-bg: #d7801d;
+  --accent-bg: #eb912b;
   --border: #a6a4a0;
 
   /* Gallery overlay */
-  --gallery-overlay-start: rgba(255, 255, 255, 0.85);
-  --gallery-overlay-end: rgba(255, 255, 255, 0.95);
+  --gallery-overlay-start: rgba(250, 252, 255, 0.85);
+  --gallery-overlay-end: rgba(250, 252, 255, 0.95);
   --gallery-text: var(--text-primary);
 
   /* Spacing */
