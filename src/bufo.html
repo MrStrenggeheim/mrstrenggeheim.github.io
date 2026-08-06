@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    {head}
+    <meta name="description"
+        content="A fast, searchable library of 1,708 Bufo reaction images and animations. Search by mood, copy with one click.">
+    <title>Find a Bufo</title>
+    <link rel="preload" href="/assets/bufo/catalog.json" as="fetch" crossorigin="anonymous">
+    <script src="/js/bufo.js" defer></script>
+</head>
+
+<body>
+    {header}
+
+    <main class="main">
+        <div class="container bufo-page">
+            <h1 class="page-title">Find a Bufo</h1>
+
+            <div class="bufo-controls">
+                <div class="bufo-topbar">
+                    <div class="search-field bufo-search">
+                        <input type="search" id="bufo-q" class="search-field__input"
+                            placeholder="happy, concerned, dance…" autocomplete="off" autocapitalize="off"
+                            autocorrect="off" spellcheck="false" aria-label="Search bufos">
+                        <button type="button" id="bufo-clear" class="search-field__clear" aria-label="Clear search">
+                            <svg>
+                                <use href="/assets/icons.svg#icon-close"></use>
+                            </svg>
+                        </button>
+                    </div>
+                    <button type="button" id="bufo-filter-toggle" class="icon-button bufo-filter-toggle"
+                        aria-label="Open filters" aria-expanded="false">
+                        <svg>
+                            <use href="/assets/icons.svg#icon-filter"></use>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- The group is physically moved into the overlay below 1024px
+                     rather than duplicated, so there is only ever one copy of
+                     these controls and nothing can fall out of sync. -->
+                <div class="bufo-filter-slot" id="bufo-filter-slot">
+                    <div class="bufo-filter-group" id="bufo-filter-group">
+                        <div class="bufo-filters" id="bufo-filters" role="group" aria-label="Filter by type">
+                            <button type="button" data-filter="all" class="pill pill--spaced is-active"
+                                aria-pressed="true">All</button>
+                            <button type="button" data-filter="static" class="pill pill--spaced"
+                                aria-pressed="false">Static</button>
+                            <button type="button" data-filter="animated" class="pill pill--spaced"
+                                aria-pressed="false">Animated</button>
+                        </div>
+
+                        <div class="bufo-quick-tags" id="bufo-quick-tags"></div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="bufo-count" id="bufo-count">Loading…</p>
+
+            <div class="bufo-grid" id="bufo-grid"></div>
+            <div id="bufo-sentinel" class="bufo-sentinel" aria-hidden="true"></div>
+
+            <p class="bufo-empty" id="bufo-empty" hidden>
+                No bufo matches that. Try a mood like <em>happy</em>, <em>concerned</em> or <em>celebration</em>.
+            </p>
+
+            <section class="bufo-credits">
+                <h2 class="bufo-credits__title">Sources</h2>
+                <p>
+                    Images come from <a href="https://github.com/knobiknows/all-the-bufo" target="_blank"
+                        rel="noopener">knobiknows/all-the-bufo</a>. Reaction tags come from
+                    <a href="https://bufo.fun/" target="_blank" rel="noopener">bufo.fun</a>
+                    (<a href="https://github.com/tfritzy/bufo.fun" target="_blank" rel="noopener">source</a>),
+                    extended with generated tags and synonyms.
+                </p>
+                <p>
+                    This page is a search tool for an existing community collection. The individual bufos are the work
+                    of their respective creators and are not claimed as my own. If you made one of these and would like
+                    it removed, <a href="https://github.com/MrStrenggeheim/mrstrenggeheim.github.io/issues"
+                        target="_blank" rel="noopener">open an issue</a> and it will be taken down.
+                </p>
+            </section>
+        </div>
+    </main>
+
+    <div class="filter-overlay" id="bufo-filter-overlay">
+        <div class="filter-overlay__backdrop" data-close-filters></div>
+        <div class="filter-overlay__content">
+            <div class="filter-overlay__header">
+                <span class="filter-overlay__title">Filters</span>
+                <button type="button" class="filter-overlay__close" data-close-filters aria-label="Close filters">
+                    <svg>
+                        <use href="/assets/icons.svg#icon-close"></use>
+                    </svg>
+                </button>
+            </div>
+            <div id="bufo-filter-overlay-body"></div>
+        </div>
+    </div>
+
+    <div class="bufo-preview" id="bufo-preview" role="dialog" aria-modal="true" aria-labelledby="bufo-preview-name"
+        hidden>
+        <div class="bufo-preview__panel">
+            <button type="button" id="bufo-preview-close" class="bufo-preview__close" aria-label="Close preview">
+                <svg>
+                    <use href="/assets/icons.svg#icon-close"></use>
+                </svg>
+            </button>
+
+            <div class="bufo-preview__stage">
+                <img id="bufo-preview-img" alt="">
+            </div>
+
+            <h2 class="bufo-preview__name" id="bufo-preview-name"></h2>
+            <p class="bufo-preview__meta" id="bufo-preview-meta"></p>
+            <div class="bufo-preview__tags" id="bufo-preview-tags"></div>
+
+            <div class="bufo-preview__actions">
+                <button type="button" id="bufo-preview-copy" class="bufo-action">Copy</button>
+                <button type="button" id="bufo-preview-share" class="bufo-action">Share</button>
+                <button type="button" id="bufo-preview-download" class="bufo-action">Download</button>
+                <button type="button" id="bufo-preview-link" class="bufo-action">Copy link</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bufo-toast" id="bufo-toast" role="status" aria-live="polite"></div>
+
+    {footer}
+</body>
+
+</html>

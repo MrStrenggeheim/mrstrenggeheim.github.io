@@ -45,24 +45,34 @@ def load_component(name: str) -> str:
     return f"<!-- Component {name} not found -->"
 
 
+def load_socials(modifier: str = '') -> str:
+    """Load the shared social icon row.
+
+    modifier: extra class on the container, e.g. ' socials--lg'.
+    """
+    return load_component('_socials.html').format(modifier=modifier)
+
+
 def load_header(active_page: str = '') -> str:
     """Load header component with active page highlighted.
-    
-    active_page: 'about', 'cv', or 'works'
+
+    active_page: 'about', 'cv', 'works', or 'bufo'
     """
     header = load_component('_header.html')
     # Set active class for the current page
     header = header.format(
         active_about=' active' if active_page == 'about' else '',
         active_cv=' active' if active_page == 'cv' else '',
-        active_works=' active' if active_page == 'works' else ''
+        active_works=' active' if active_page == 'works' else '',
+        active_bufo=' active' if active_page == 'bufo' else '',
+        socials=load_socials()
     )
     return header
 
 
 def load_footer() -> str:
     """Load footer component."""
-    return load_component('_footer.html')
+    return load_component('_footer.html').format(socials=load_socials())
 
 
 def load_head() -> str:
@@ -767,6 +777,7 @@ def build_cv():
 STATIC_PAGES = [
     ("src/index.html", "index.html", "about"),
     ("src/works.html", "works.html", "works"),
+    ("src/bufo.html", "bufo/index.html", "bufo"),
     ("src/404.html", "404.html", ""),
 ]
 
@@ -793,11 +804,13 @@ def build_static_pages():
         html = template.format(
             head=load_head(),
             header=load_header(active_page),
-            footer=load_footer()
+            footer=load_footer(),
+            socials_lg=load_socials(' socials--lg')
         )
         
-        # Write output
+        # Write output (nested outputs give us clean /bufo/ style URLs)
         output_path = Path(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(html, encoding="utf-8")
         is_last = (src_file == STATIC_PAGES[-1][0])
         char = "└──" if is_last else "├──"
