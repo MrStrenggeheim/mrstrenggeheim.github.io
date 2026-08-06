@@ -38,6 +38,20 @@ sections:
 
   - title: Work Experience
     entries:
+      - title: "Databricks"
+        location: "Berlin, Germany"
+        subentries:
+          - subtitle: "Software Engineering Intern"
+            date: "Aug 2026 – Oct 2026"
+            description: "Lakeguard Isolation"
+
+      - title: "Stripe"
+        location: "Dublin, Ireland"
+        subentries:
+          - subtitle: "Software Engineering Intern"
+            date: "May 2026 – Jul 2026"
+            description: "Local Payment Methods"
+
       - title: "BMW Group"
         location: "Munich, Germany"
         subentries:

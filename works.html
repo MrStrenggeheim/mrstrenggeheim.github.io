@@ -39,6 +39,34 @@
                 <li><a href="/" class="header__nav-link">About</a></li>
                 <li><a href="/cv.html" class="header__nav-link">CV</a></li>
                 <li><a href="/works.html" class="header__nav-link active">Works</a></li>
+                <li><a href="/bufo/" class="header__nav-link">Bufo</a></li>
+                <!-- Socials sit at the foot of the open burger menu on mobile
+                     and are hidden on desktop, where the footer carries them. -->
+                <li class="header__nav-socials"><!-- Socials Component -->
+<!-- Usage: load_socials(modifier) where modifier is e.g. ' socials--lg'.
+     Single source of truth for the social icon row - used by the footer, the
+     landing hero and the mobile burger menu. Add a new icon here once and it
+     appears in all of them. -->
+<div class="socials">
+    <a href="https://github.com/MrStrenggeheim" class="socials__link" aria-label="GitHub" target="_blank"
+        rel="noopener">
+        <svg>
+            <use href="/assets/icons.svg#icon-github"></use>
+        </svg>
+    </a>
+    <a href="https://linkedin.com/in/florian-hunecke" class="socials__link" aria-label="LinkedIn" target="_blank"
+        rel="noopener">
+        <svg>
+            <use href="/assets/icons.svg#icon-linkedin"></use>
+        </svg>
+    </a>
+    <a href="/bufo/" class="socials__link" aria-label="Bufo library" title="Find a Bufo">
+        <svg>
+            <use href="/assets/icons.svg#icon-bufo"></use>
+        </svg>
+    </a>
+</div>
+</li>
             </ul>
             <button class="theme-toggle" aria-label="Toggle dark mode">
                 <svg>
@@ -166,20 +194,31 @@
 <footer class="footer">
     <div class="footer__container">
         <p class="footer__copyright">© 2026 Florian Hunecke</p>
-        <div class="footer__links">
-            <a href="https://github.com/MrStrenggeheim" class="footer__link" aria-label="GitHub" target="_blank"
-                rel="noopener">
-                <svg>
-                    <use href="/assets/icons.svg#icon-github"></use>
-                </svg>
-            </a>
-            <a href="https://linkedin.com/in/florian-hunecke" class="footer__link" aria-label="LinkedIn" target="_blank"
-                rel="noopener">
-                <svg>
-                    <use href="/assets/icons.svg#icon-linkedin"></use>
-                </svg>
-            </a>
-        </div>
+        <!-- Socials Component -->
+<!-- Usage: load_socials(modifier) where modifier is e.g. ' socials--lg'.
+     Single source of truth for the social icon row - used by the footer, the
+     landing hero and the mobile burger menu. Add a new icon here once and it
+     appears in all of them. -->
+<div class="socials">
+    <a href="https://github.com/MrStrenggeheim" class="socials__link" aria-label="GitHub" target="_blank"
+        rel="noopener">
+        <svg>
+            <use href="/assets/icons.svg#icon-github"></use>
+        </svg>
+    </a>
+    <a href="https://linkedin.com/in/florian-hunecke" class="socials__link" aria-label="LinkedIn" target="_blank"
+        rel="noopener">
+        <svg>
+            <use href="/assets/icons.svg#icon-linkedin"></use>
+        </svg>
+    </a>
+    <a href="/bufo/" class="socials__link" aria-label="Bufo library" title="Find a Bufo">
+        <svg>
+            <use href="/assets/icons.svg#icon-bufo"></use>
+        </svg>
+    </a>
+</div>
+
     </div>
 </footer>
 </body>
