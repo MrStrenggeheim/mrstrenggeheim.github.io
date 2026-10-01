@@ -180,7 +180,7 @@ ARTICLE_TEMPLATE = """<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="{subtitle}">
   <title>{title} - Florian Hunecke</title>
-  <link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon.png">
+  <link rel="apple-touch-icon" type="image/png" sizes="96x96" href="/assets/favicon.png">
   <link rel="icon" type="image/svg+xml" sizes="any" href="/assets/favicon.svg">
   <script>
     (function() {{
