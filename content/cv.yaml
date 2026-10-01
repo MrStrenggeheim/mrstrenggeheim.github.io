@@ -1,41 +1,4 @@
 sections:
-  - title: Education
-    entries:
-      - location: "Munich, Germany" 
-        title: "Technical University of Munich"
-        subentries:
-          - subtitle: "M.Sc. Computer Science"
-            date: "Apr 2024 – Present"
-            items:
-              - "Master Seminar: De-Novo Molecular Generation with GNNs"
-              - "Master Practical: Medical Image Generation Using Segmentation-Guided Diffusion"
-          - subtitle: "B.Sc. Computer Science (Physics Minor)"
-            date: "Sep 2020 – Apr 2024"
-            items:
-              - "Grade: 1.6/1.0, graduated top 12%"
-              - "Thesis: [Towards Fair and Accurate Medical Image Embeddings](/works/fair-medical-embeddings.html)"
-              - "Seminar: Bidirectional Charging and V2X Integration"
-              - "Practical: Cloud Software Engineering"
-
-      - title: "University College Dublin"
-        location: "Dublin, Ireland"
-        subentries:
-          - subtitle: "Erasmus Exchange Semester"
-            date: "Sep 2022 – Dec 2022"
-            items:
-              - "Grade 4.0/4.0"
-              - "Full scholarship by Erasmus+ and the German Academic Scholarship Foundation"
-              - "Focus on Data Analytics and Artificial Intelligence"
-
-      - title: "Graf-Rasso-Gymnasium"
-        location: "Fürstenfeldbruck, Germany"
-        subentries:
-          - subtitle: "Abitur"
-            date: "Sep 2012 – Jul 2020"
-            items:
-              - "Grade: 1.0/1.0, graduated top of the year"
-              - "Subjects: Mathematics, German, Computer Science, Latin, Geography"
-
   - title: Work Experience
     entries:
       - title: "Databricks"
@@ -78,6 +41,43 @@ sections:
             date: "Apr 2024 – Sep 2024"
           - subtitle: "Teaching Assistant – Introduction to Programming"
             date: "Oct 2021 – Mar 2022"
+
+  - title: Education
+    entries:
+      - location: "Munich, Germany" 
+        title: "Technical University of Munich"
+        subentries:
+          - subtitle: "M.Sc. Computer Science"
+            date: "Apr 2024 – Present"
+            items:
+              - "Master Seminar: De-Novo Molecular Generation with GNNs"
+              - "Master Practical: Medical Image Generation Using Segmentation-Guided Diffusion"
+          - subtitle: "B.Sc. Computer Science (Physics Minor)"
+            date: "Sep 2020 – Apr 2024"
+            items:
+              - "Grade: 1.6/1.0, graduated top 12%"
+              - "Thesis: [Towards Fair and Accurate Medical Image Embeddings](/works/fair-medical-embeddings.html)"
+              - "Seminar: Bidirectional Charging and V2X Integration"
+              - "Practical: Cloud Software Engineering"
+
+      - title: "University College Dublin"
+        location: "Dublin, Ireland"
+        subentries:
+          - subtitle: "Erasmus Exchange Semester"
+            date: "Sep 2022 – Dec 2022"
+            items:
+              - "Grade 4.0/4.0"
+              - "Full scholarship by Erasmus+ and the German Academic Scholarship Foundation"
+              - "Focus on Data Analytics and Artificial Intelligence"
+
+      - title: "Graf-Rasso-Gymnasium"
+        location: "Fürstenfeldbruck, Germany"
+        subentries:
+          - subtitle: "Abitur"
+            date: "Sep 2012 – Jul 2020"
+            items:
+              - "Grade: 1.0/1.0, graduated top of the year"
+              - "Subjects: Mathematics, German, Computer Science, Latin, Geography"
 
   - title: Volunteering
     entries:
