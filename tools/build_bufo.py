@@ -17,6 +17,7 @@ import argparse
 import json
 import re
 import shutil
+import subprocess
 import unicodedata
 from pathlib import Path
 
@@ -26,6 +27,7 @@ REPO = Path(__file__).resolve().parent.parent
 OUT_DIR = REPO / "assets" / "bufo"
 FULL_DIR = OUT_DIR / "full"
 THUMB_DIR = OUT_DIR / "thumb"
+STICKER_DIR = OUT_DIR / "sticker"
 CATALOG = OUT_DIR / "catalog.json"
 GENERATED_TAGS = OUT_DIR / "tags-generated.json"
 
@@ -34,6 +36,36 @@ THUMB_QUALITY = 82
 ANIM_QUALITY = 70
 # Long animations blow up the thumbnail for no visible gain in a 100px cell.
 MAX_ANIM_FRAMES = 80
+
+# WhatsApp sticker spec: exactly 512x512, animated <=500KB, static <=100KB.
+# q=60 clears the limit for ~90% of the collection; the long, high-motion tail
+# needs progressively harder settings. WhatsApp silently flattens anything
+# oversized to its first frame, so losing quality beats losing the animation.
+# compression_level 6 is several times slower for a negligible size win.
+STICKER_SIZE = 512
+STICKER_COMPRESSION = 4
+STICKER_LIMIT_BYTES = 500 * 1024
+
+# (quality, fps cap) tried in order until the result fits. Dropping frames is
+# held back until quality alone has failed, since jerky motion reads worse
+# than mild artefacting.
+STICKER_LADDER = [
+    (60, None),
+    (45, None),
+    (30, None),
+    (30, 15),
+    (25, 12),
+    (20, 10),
+]
+
+# Static stickers are produced in-browser with canvas.toBlob('image/webp'),
+# which keeps ~24MB of derivable assets out of the repo. Only animated
+# sources need a prebuilt file, because no browser can encode animated WebP.
+STICKER_FILTER = (
+    f"scale={STICKER_SIZE}:{STICKER_SIZE}"
+    ":force_original_aspect_ratio=decrease:flags=lanczos,"
+    f"pad={STICKER_SIZE}:{STICKER_SIZE}:(ow-iw)/2:(oh-ih)/2:color=#00000000"
+)
 
 EXT_CODES = {".png": 0, ".gif": 1, ".jpg": 2, ".jpeg": 2}
 EXT_NAMES = ["png", "gif", "jpg"]
@@ -290,6 +322,50 @@ def make_thumb(src: Path, dst: Path) -> tuple[int, int, bool]:
     return width, height, True
 
 
+def _encode_sticker(src: Path, dst: Path, quality: int, fps: int | None) -> int:
+    """One ffmpeg pass. Returns the size in bytes."""
+    video_filter = STICKER_FILTER
+    if fps:
+        video_filter += f",fps={fps}"
+
+    subprocess.run(
+        [
+            "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
+            "-i", str(src),
+            "-vf", video_filter,
+            "-c:v", "libwebp_anim",
+            "-q:v", str(quality),
+            "-compression_level", str(STICKER_COMPRESSION),
+            "-loop", "0", "-an",
+            # Dropping frames needs re-timed output; passthrough would keep the
+            # original timestamps and stretch the animation.
+            "-fps_mode", "cfr" if fps else "passthrough",
+            str(dst),
+        ],
+        check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    return dst.stat().st_size
+
+
+def make_sticker(src: Path, dst: Path) -> tuple[int, bool]:
+    """
+    Write a WhatsApp-spec animated sticker: 512x512, padded with transparency
+    rather than cropped, so nothing is cut off. Steps down through
+    STICKER_LADDER until the file fits. Returns (size, fits).
+
+    Pillow's animated WebP encoder mangles GIF frame timing, so this shells out
+    to ffmpeg. -nostdin matters: ffmpeg otherwise consumes the caller's stdin.
+    """
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    size = 0
+    for quality, fps in STICKER_LADDER:
+        size = _encode_sticker(src, dst, quality, fps)
+        if size <= STICKER_LIMIT_BYTES:
+            return size, True
+    return size, False
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", required=True, type=Path,
@@ -314,10 +390,12 @@ def main() -> None:
 
     FULL_DIR.mkdir(parents=True, exist_ok=True)
     THUMB_DIR.mkdir(parents=True, exist_ok=True)
+    STICKER_DIR.mkdir(parents=True, exist_ok=True)
 
     tag_index = {t: i for i, t in enumerate(vocabulary)}
     entries = []
-    stats = {"animated": 0, "tagged": 0, "generated": 0, "untagged": 0, "failed": 0}
+    stats = {"animated": 0, "tagged": 0, "generated": 0, "untagged": 0,
+             "failed": 0, "stickers": 0, "oversize": 0}
 
     for n, src in enumerate(files, 1):
         stem = norm_id(src.stem)
@@ -341,6 +419,28 @@ def main() -> None:
 
         if not dest_full.exists() or dest_full.stat().st_size != src.stat().st_size:
             shutil.copy2(src, dest_full)
+
+        # Animated bufos need a prebuilt sticker; static ones are converted
+        # in the browser when a pack is assembled.
+        if animated:
+            dest_sticker = STICKER_DIR / f"{stem}-{EXT_NAMES[EXT_CODES[ext]]}.webp"
+            try:
+                if not (args.skip_existing and dest_sticker.exists()):
+                    size, fits = make_sticker(src, dest_sticker)
+                else:
+                    size = dest_sticker.stat().st_size
+                    fits = size <= STICKER_LIMIT_BYTES
+                stats["stickers"] += 1
+                # WhatsApp silently flattens an oversized animated sticker to
+                # its first frame, so an overrun has to be visible here.
+                if not fits:
+                    print(f"  ⚠️  {src.name}: sticker {size / 1024:.0f} KB "
+                          f"exceeds the {STICKER_LIMIT_BYTES // 1024} KB limit "
+                          f"even at the lowest quality")
+                    stats["oversize"] += 1
+            except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+                print(f"  ⚠️  {src.name}: sticker encode failed ({exc})")
+                stats["failed"] += 1
 
         tags = source_tags.get(stem) or []
         if tags:
@@ -396,6 +496,9 @@ def main() -> None:
     size_kb = CATALOG.stat().st_size / 1024
     print(f"\n✅ catalog.json  {len(entries)} bufos, {size_kb:.0f} KB")
     print(f"   animated: {stats['animated']}   static: {len(entries) - stats['animated']}")
+    print(f"   stickers built:     {stats['stickers']}")
+    if stats["oversize"]:
+        print(f"   ⚠️ over 500KB:      {stats['oversize']}")
     print(f"   tags from bufo.fun: {stats['tagged']}")
     print(f"   tags generated:     {stats['generated']}")
     print(f"   still untagged:     {stats['untagged']}")
