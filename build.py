@@ -17,9 +17,10 @@ import re
 from datetime import datetime
 from pathlib import Path
 from urllib.request import urlopen, Request
-from urllib.error import URLError, HTTPError
 from html.parser import HTMLParser
-import socket
+import subprocess
+import xml.etree.ElementTree as ET
+from urllib.parse import quote, unquote
 
 import yaml
 import pypandoc
@@ -29,6 +30,9 @@ CONTENT_DIR = Path("content/works")
 OUTPUT_DIR = Path("works")
 INDEX_FILE = OUTPUT_DIR / "works.json"
 LINK_CACHE_FILE = OUTPUT_DIR / "link_cache.json"
+LINK_FETCH_TIMEOUT = 10
+LINK_FETCH_MAX_BYTES = 50000
+PDF_EXTRACT_TIMEOUT = 10
 COMPONENTS_DIR = Path("components")
 
 # Prism.js Theme - Change this to switch syntax highlighting theme
@@ -86,7 +90,7 @@ class OpenGraphParser(HTMLParser):
     def __init__(self):
         super().__init__()
         self.og_data = {}
-        self.title = None
+        self.title = ''
         self.in_title = False
     
     def handle_starttag(self, tag, attrs):
@@ -106,7 +110,7 @@ class OpenGraphParser(HTMLParser):
     
     def handle_data(self, data):
         if self.in_title:
-            self.title = data.strip()
+            self.title += data
     
     def handle_endtag(self, tag):
         if tag == 'title':
@@ -128,48 +132,118 @@ def save_link_cache(cache: dict):
     LINK_CACHE_FILE.write_text(json.dumps(cache, indent=2), encoding='utf-8')
 
 
-def fetch_opengraph(url: str, cache: dict) -> dict | None:
-    """Fetch OpenGraph metadata from a URL with 3-second timeout.
-    
-    Returns dict with keys: title, description, image, or None on failure.
-    Uses cache to avoid repeated fetches.
-    """
-    # Check cache first
-    if url in cache:
-        return cache[url]
-    
+def fetch_opengraph(url: str, cache: dict, doi: str | None = None) -> dict | None:
+    """Cache usable link titles; retry previous failures on subsequent builds."""
+    cached = cache.get(url)
+    if isinstance(cached, dict) and isinstance(cached.get('title'), str) and cached['title'].strip():
+        return cached
+    # Old builds cached None and empty responses permanently. Discard those.
+    cache.pop(url, None)
+
     try:
         print(f"    Fetching OG data: {url}")
-        req = Request(
-            url,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (compatible; LinkPreview/1.0)',
-                'Accept': 'text/html',
-            }
-        )
-        # 3 second timeout
-        socket.setdefaulttimeout(3)
-        with urlopen(req, timeout=3) as response:
-            # Only read first 50KB to find meta tags
-            html = response.read(50000).decode('utf-8', errors='ignore')
-        
+        req = Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (compatible; LinkPreview/1.0)',
+            'Accept': 'text/html',
+        })
+        with urlopen(req, timeout=LINK_FETCH_TIMEOUT) as response:
+            if response.status != 200:
+                raise ValueError(f"HTTP {response.status}: no usable page returned")
+            charset = response.headers.get_content_charset() or 'utf-8'
+            page_html = response.read(LINK_FETCH_MAX_BYTES).decode(charset, errors='replace')
         parser = OpenGraphParser()
-        parser.feed(html)
-        
-        og_data = {
-            'title': parser.og_data.get('title') or parser.title or '',
-            'description': parser.og_data.get('description', ''),
-            'image': parser.og_data.get('image', ''),
+        parser.feed(page_html)
+        data = {
+            'title': (parser.og_data.get('title') or parser.title or '').strip(),
+            'description': parser.og_data.get('description', '').strip(),
+            'image': parser.og_data.get('image', '').strip(),
         }
-        
-        # Cache the result
-        cache[url] = og_data
-        return og_data
-        
-    except (URLError, HTTPError, socket.timeout, Exception) as e:
-        print(f"    Failed to fetch OG data: {e}")
-        cache[url] = None  # Cache the failure too
-        return None
+        if not data['title']:
+            raise ValueError("No page title in the response")
+        cache[url] = data
+        return data
+    except Exception as error:
+        print(f"    Failed to fetch OG data: {error}")
+
+    # DOI metadata remains available when a publisher serves a verification page.
+    if doi:
+        try:
+            metadata_url = f"https://api.crossref.org/works/{quote(doi, safe='')}"
+            request = Request(metadata_url, headers={
+                'User-Agent': 'WebsiteLinkPreview/1.0',
+                'Accept': 'application/json',
+            })
+            with urlopen(request, timeout=LINK_FETCH_TIMEOUT) as response:
+                metadata = json.load(response)['message']
+            titles = metadata.get('title') or []
+            title = titles[0].strip() if titles else ''
+            if not title:
+                raise ValueError("No title in DOI metadata")
+            data = {'title': title, 'description': '', 'image': '', 'source': metadata_url}
+            cache[url] = data
+            print(f"    Using DOI metadata: {doi}")
+            return data
+        except Exception as error:
+            print(f"    Failed to fetch DOI metadata: {error}")
+    # Failures stay uncached, so the next build can try again.
+    return None
+
+
+def extract_pdf_title(path: Path) -> str:
+    """Prefer verified PDF metadata, then the largest first-page heading block."""
+    if not path.is_file():
+        return ''
+    metadata_title = ''
+    try:
+        info = subprocess.check_output(
+            ['pdfinfo', str(path)], stderr=subprocess.DEVNULL,
+            text=True, encoding='utf-8', errors='replace', timeout=PDF_EXTRACT_TIMEOUT,
+        )
+        title_match = re.search(r'^Title:[ \t]*(.*)$', info, re.MULTILINE)
+        metadata_title = title_match.group(1).strip() if title_match else ''
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+    try:
+        page_xml = subprocess.check_output(
+            ['pdftotext', '-f', '1', '-l', '1', '-bbox-layout', str(path), '-'],
+            stderr=subprocess.DEVNULL, text=True, encoding='utf-8', errors='replace',
+            timeout=PDF_EXTRACT_TIMEOUT,
+        )
+        root = ET.fromstring(page_xml)
+        namespace = {'pdf': 'http://www.w3.org/1999/xhtml'}
+        page = root.find('.//pdf:page', namespace)
+        if page is None:
+            return ''
+        words = page.findall('.//pdf:word', namespace)
+        page_text = ' '.join(word.text or '' for word in words)
+        normalize = lambda value: re.sub(r'\W+', '', value.casefold())
+        # Templates often leave an unrelated Title field. Trust it only when visible.
+        if len(metadata_title.split()) >= 3 and normalize(metadata_title) in normalize(page_text):
+            return metadata_title
+
+        # The heading usually uses the largest type near the top of the page.
+        heading_blocks = []
+        for block in page.findall('.//pdf:block', namespace):
+            lines = []
+            for line in block.findall('pdf:line', namespace):
+                line_words = line.findall('pdf:word', namespace)
+                if not line_words or float(line.attrib['yMin']) > float(page.attrib['height']) / 3:
+                    continue
+                size = max(float(word.attrib['yMax']) - float(word.attrib['yMin']) for word in line_words)
+                text = ' '.join(word.text or '' for word in line_words).strip()
+                lines.append((size, text))
+            if lines:
+                heading_blocks.append(lines)
+        if not heading_blocks:
+            return ''
+        block = max(heading_blocks, key=lambda lines: max(size for size, _ in lines))
+        largest_size = max(size for size, _ in block)
+        title = ' '.join(text for size, text in block if size >= largest_size * 0.95)
+        return title if len(title.split()) >= 3 else ''
+    except (OSError, subprocess.SubprocessError, ET.ParseError, ValueError, KeyError):
+        # Avoid displaying unverified template metadata when extraction fails.
+        return ''
 
 
 # Article HTML template
@@ -453,7 +527,7 @@ def build_works():
             subtitle = frontmatter.get("subtitle", "")
             date = frontmatter.get("date", datetime.now().isoformat()[:10])
             tags = frontmatter.get("tags", [])
-            thumbnail = frontmatter.get("thumbnail", "/assets/thumbnails/default.png")
+            thumbnail = frontmatter.get("thumbnail", "/assets/thumbnails/placeholder.png")
             work_type = type_dir
             
             # URL for this article (slug already set above)
@@ -506,7 +580,11 @@ def build_works():
                     is_external = bool(domain) and scheme in ('http', 'https')
                     
                     # Try to fetch OpenGraph data only for external URLs
-                    og_data = fetch_opengraph(link_url, link_cache) if is_external else None
+                    doi = frontmatter.get('doi') if str(name).lower() == 'paper' else None
+                    og_data = fetch_opengraph(link_url, link_cache, doi=doi) if is_external else None
+                    if not is_external and parsed.path.lower().endswith('.pdf'):
+                        pdf_path = asset_dir / Path(unquote(parsed.path)).name if asset_dir else Path(unquote(parsed.path).lstrip('/'))
+                        og_data = {'title': extract_pdf_title(pdf_path)}
                     
                     # Create favicon HTML with multi-level fallback chain:
                     # Google (64px) -> DuckDuckGo -> Link SVG icon
@@ -523,61 +601,26 @@ def build_works():
                     else:
                         favicon_html = fallback_icon_svg
                     
-                    # Check if we have rich OG data with an actual image
-                    has_og_image = og_data and og_data.get('image', '').strip()
-                    has_og_title = og_data and og_data.get('title', '').strip()
-                    
-                    if has_og_image:
-                        # Rich preview card with OpenGraph image
-                        og_title = html.escape(og_data.get('title', name)[:200])
-                        og_desc = html.escape(og_data.get('description', '')[:300])
-                        og_image = og_data.get('image', '')
-                        
-                        # Make relative image URLs absolute
-                        if og_image and og_image.startswith('/'):
-                            og_image = f"{scheme}://{domain}{og_image}"
-                        
-                        image_html = f'<img class="link-preview__image" src="{og_image}" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
-                        desc_html = f'<span class="link-preview__desc">{og_desc}</span>' if og_desc else ''
-                        
-                        card = f'''<a class="link-preview" href="{link_url}" target="_blank" rel="noopener">
-                            {image_html}
-                            <div class="link-preview__content">
-                                <span class="link-preview__title">{og_title}</span>
-                                {desc_html}
-                                <span class="link-preview__domain">{domain}</span>
-                            </div>
-                            {arrow_svg}
-                        </a>'''
-                    elif has_og_title:
-                        # Has OG title but no image - use favicon + OG title
-                        og_title = html.escape(og_data.get('title', name)[:200])
-                        og_desc = html.escape(og_data.get('description', '')[:300])
-                        desc_html = f'<span class="link-preview__desc">{og_desc}</span>' if og_desc else ''
-                        domain_html = f'<span class="link-preview__domain">{domain}</span>' if is_external else ''
-                        
-                        card = f'''<a class="link-preview link-preview--fallback" href="{link_url}" target="_blank" rel="noopener">
-                            {favicon_html}
-                            <div class="link-preview__content">
-                                <span class="link-preview__title">{og_title}</span>
-                                {desc_html}
-                                {domain_html}
-                            </div>
-                            {arrow_svg}
-                        </a>'''
-                    else:
-                        # No OG data at all - use favicon + link name
-                        domain_html = f'<span class="link-preview__domain">{domain}</span>' if is_external else ''
-                        
-                        card = f'''<a class="link-preview link-preview--fallback" href="{link_url}" target="_blank" rel="noopener">
-                            {favicon_html}
-                            <div class="link-preview__content">
-                                <span class="link-preview__title">{html.escape(name)}</span>
-                                {domain_html}
-                            </div>
-                            {arrow_svg}
-                        </a>'''
-                    
+                    label = html.escape(str(name))
+                    safe_url = html.escape(link_url, quote=True)
+                    og_title = str((og_data or {}).get('title', '')).strip()
+                    og_desc = str((og_data or {}).get('description', '')).strip()
+                    detail = og_title if og_title.lower() != str(name).lower() else ''
+                    detail_html = f'<span class="link-preview__desc">{html.escape(detail)}</span>' if detail else ''
+                    destination = domain if is_external else f"{Path(parsed.path).suffix.lstrip('.').upper() or 'FILE'} · {Path(parsed.path).name}"
+                    preview_title = html.escape(" · ".join(filter(None, [og_title, og_desc])), quote=True)
+                    destination_html = f'<span class="link-preview__domain">{html.escape(destination)}</span>'
+                    card_class = 'link-preview' if detail else 'link-preview link-preview--short'
+                    card = f'''<a class="{card_class}" href="{safe_url}" title="{preview_title}" target="_blank" rel="noopener">
+                        <div class="link-preview__icon-slot">{favicon_html}</div>
+                        <div class="link-preview__content">
+                            <span class="link-preview__title">{label}</span>
+                            {detail_html}
+                            {destination_html}
+                        </div>
+                        {arrow_svg}
+                    </a>'''
+
                     links_items.append(card)
                 
                 external_links_html = f'<div class="article__link-previews">{"".join(links_items)}</div>'

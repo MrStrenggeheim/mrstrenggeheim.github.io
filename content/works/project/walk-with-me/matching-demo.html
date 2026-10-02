@@ -7,34 +7,33 @@
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/article-demo.css">
   <style>
-    :root { --demo-name-width: 5.5rem; --demo-row-height: 3rem; --demo-handle-width: 1.5rem; --demo-handle-height: 2.75rem; }
     .chart { margin: var(--space-md) 0; }
     .row { display: grid; grid-template-columns: var(--demo-name-width) 1fr; align-items: center; height: var(--demo-row-height); gap: var(--space-sm); }
     .name { font-size: var(--font-size-sm); color: var(--text-primary); }
     .person { display: flex; align-items: center; gap: var(--space-sm); min-height: var(--control-height); cursor: pointer; }
-    .person input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--demo-green); cursor: pointer; }
-    .track { height: 100%; position: relative; background: repeating-linear-gradient(to right, var(--border) 0 1px, transparent 1px 33.333%); margin-inline: calc(var(--demo-handle-width) / 2); }
-    .bar { position: absolute; top: calc(50% - .5rem); height: 1rem; border-radius: var(--space-xs); background: color-mix(in srgb, var(--demo-green) 20%, var(--bg-tertiary)); }
-    .edge { position: absolute; top: 50%; width: var(--demo-handle-width); height: var(--demo-handle-height); display: grid; place-items: center; padding: 0; transform: translate(-50%, -50%); border: 0; background: transparent; color: var(--demo-green); cursor: ew-resize; touch-action: none; user-select: none; z-index: 1; }
-    .edge::before { content: ''; position: absolute; width: 1.1rem; height: 1.8rem; border: 1.5px solid var(--demo-green); border-radius: .4rem; background: var(--bg-primary); }
-    .edge svg { position: relative; width: .6rem; height: .9rem; pointer-events: none; }
-    .edge::after { content: attr(data-time); position: absolute; bottom: calc(100% - .1rem); left: 50%; transform: translateX(-50%); padding: .15rem .3rem; border-radius: var(--space-xs); background: var(--text-primary); color: var(--bg-primary); font: var(--font-size-xs) var(--font-mono); white-space: nowrap; opacity: 0; pointer-events: none; }
+    .person input { width: var(--space-md); height: var(--space-md); margin: 0; accent-color: var(--demo-green); cursor: pointer; }
+    .track { height: 100%; position: relative; background: repeating-linear-gradient(to right, var(--demo-grid) 0 1px, transparent 1px calc(100% / 3)); margin-inline: calc(var(--demo-handle-width) / 2); }
+    .bar { position: absolute; top: calc(50% - var(--demo-bar-height) / 2); height: var(--demo-bar-height); border-radius: var(--radius-control); background: color-mix(in srgb, var(--demo-green) 20%, var(--bg-tertiary)); }
+    .edge { position: absolute; top: 50%; width: var(--demo-handle-width); height: var(--demo-handle-height); display: grid; place-items: center; padding: 0; transform: translate(-50%, -50%); border: 0; background: transparent; color: var(--bg-primary); cursor: ew-resize; touch-action: none; user-select: none; z-index: 1; }
+    .edge::before { content: ''; position: absolute; width: var(--demo-handle-width); height: calc(var(--demo-handle-height) - var(--space-sm)); border: 0; border-radius: var(--radius-control); background: var(--demo-green); }
+    .edge svg { position: relative; width: var(--demo-grip-width); height: var(--demo-grip-height); pointer-events: none; }
+    .edge::after { content: attr(data-time); position: absolute; bottom: calc(100% + var(--space-xs)); left: 50%; transform: translateX(-50%); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-control); background: var(--text-primary); color: var(--bg-primary); font: var(--font-size-xs) var(--font-mono); white-space: nowrap; opacity: 0; pointer-events: none; }
     .edge[data-edge="start"] { left: 0; }
     .edge[data-edge="end"] { left: 100%; }
     .edge:hover, .edge:focus, .edge.is-dragging { color: var(--bg-primary); outline: none; z-index: 2; }
     .edge:hover::before, .edge:focus::before, .edge.is-dragging::before { background: var(--demo-green); }
+    .edge:focus-visible::before { outline: none; outline-offset: var(--space-xs); }
     .edge:hover::after, .edge:focus::after, .edge.is-dragging::after { opacity: 1; }
     .row.disabled .track, .row.disabled .name span { opacity: .35; }
     .row.disabled .edge { visibility: hidden; }
     .overlap .bar { background: var(--demo-green); }
-    .overlap .name { padding-left: 1.5rem; font-weight: 700; }
+    .overlap .name { padding-left: calc(var(--space-md) + var(--space-sm)); font-weight: 700; }
     .ticks { margin-left: calc(var(--demo-name-width) + var(--space-sm) + var(--demo-handle-width) / 2); margin-right: calc(var(--demo-handle-width) / 2); display: flex; justify-content: space-between; font-size: var(--font-size-xs); color: var(--text-secondary); }
     .result { margin-top: var(--space-sm); padding-top: var(--space-md); border-top: 1px solid var(--border); }
     .result strong { display: block; font-size: var(--font-size-lg); color: var(--demo-green); }
     .result .limits { font-size: var(--font-size-xs); }
     .result p { font-size: var(--font-size-sm); color: var(--text-secondary); }
     .result[data-valid="false"] strong { color: var(--accent); }
-    @media (max-width: 360px) { :root { --demo-name-width: 5rem; } }
   </style>
 </head>
 <body>

@@ -261,6 +261,11 @@
 
         const filtered = getFilteredWorks();
 
+        // Mirror the selected state for keyboard and screen-reader users.
+        for (const button of document.querySelectorAll('.works__filter-pill, .works__view-btn')) {
+            button.setAttribute('aria-pressed', String(button.classList.contains('active')));
+        }
+
         // Update count
         if (countDisplay) {
             countDisplay.textContent = `${filtered.length} ${filtered.length === 1 ? 'entry' : 'entries'}`;
@@ -277,7 +282,7 @@
         grid.innerHTML = filtered.map(work => `
       <a href="${work.url}" class="work-card">
         <div class="work-card__thumbnail">
-          <img src="${work.thumbnail || '/assets/thumbnails/default.png'}" alt="${work.title}" loading="lazy">
+          <img src="${work.thumbnail || '/assets/thumbnails/placeholder.png'}" alt="" loading="lazy" decoding="async">
         </div>
         <div class="work-card__content">
           <h3 class="work-card__title">${work.title}</h3>

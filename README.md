@@ -28,48 +28,55 @@ A minimalistic personal website featuring a landing page, CV, and works (blog/pr
 
 ## Styling Rules
 
-All styles live in `css/style.css`. To stop pages from drifting apart visually,
-it has a **SHARED UI PRIMITIVES** section holding one definition per control:
+Keep the grey/orange palette and use one visual cue to distinguish a component:
+usually its background. Tags, controls, cards, media previews, and article demos
+have no enclosing borders. Dividers can mark document structure. Do not add
+orange focus outlines; preserve keyboard operation.
 
-| Primitive | Use for |
+All site styles live in `css/style.css`. Its **SHARED UI PRIMITIVES** section
+owns the appearance of controls, including legacy `.works__*` selectors. Avoid
+redeclaring their padding, font, background, or height in page-specific rules.
+
+| Token / primitive | Purpose |
 | --- | --- |
-| `.container` | Page content wrapper (max width + padding) |
-| `.page-title` | The heading at the top of a page |
-| `.pill` | Filter and tag buttons (`.pill--spaced`, `.pill--filled`) |
-| `.search-field` | Text input with a trailing clear button |
-| `.icon-button` | Compact icon-and-label button |
-| `.filter-overlay` | Slide-in filter panel with backdrop |
+| `--control-height` | 2.75rem (44px at the default font size) for search and standard buttons |
+| `--control-height-small` | 2rem (32px) for type filters and tag chips |
+| `--control-gap` | Shared 8px spacing between controls |
+| `--control-padding`, `--icon-size` | Shared horizontal padding and icon dimensions |
+| `--radius` | Shared UI corners; currently `0px`. Controls and surfaces inherit it through `--radius-control` and `--radius-surface` |
+| `--space-*` | Spacing scale; derive intermediate sizes with `calc()` |
+| `--surface-selected`, `--text-selected` | Consistent, theme-aware selected state |
+| `--motion-fast`, `--motion-standard`, `--ease-out` | Interaction timing; honor reduced motion |
+| `.pill`, `.icon-button`, `.search-field` | Shared interactive controls |
+| `.container`, `.page-title`, `.filter-overlay` | Shared layout and page furniture |
 
-When building a new page:
+New components use these tokens and primitives. Add a named token for a new
+role instead of a literal size or color. Page-specific rules should only change
+layout. Work cards preserve their original square image and gradient overlay;
+hover feedback does not move or scale their hit area.
 
-1. **Use the primitive class in the markup.** Do not invent a new class that
-   restates the same colours, borders or type.
-2. **Legacy page-specific names** (the `.works__*` set) are attached to the
-   primitives as grouped selectors, so there is still only one place that
-   defines the look. If you must keep a bespoke name, add its selector to the
-   existing group — never copy the declarations.
-3. **Page-specific rules may only change layout** — margins, widths, grid.
-   Colour, border, and typography come from the primitive.
-4. **Never hard-code a colour or size.** Use the tokens in `:root`
-   (`--accent`, `--space-md`, `--font-size-sm`, `--control-height`, …). If a
-   value is missing, add a token rather than a literal.
-5. **Reuse breakpoints.** `--bp-sm` 480px, `--bp-md` 768px, `--bp-lg` 1024px.
-   The filter overlay snaps at 1024px on both the works and bufo pages.
+Interactive examples use `css/article-demo.css` and the same geometry, with a
+semantic green accent for availability and friendship data. Preserve all graph,
+slider, reset, and keyboard behavior when changing their presentation.
 
-Shared page furniture (header, footer, `<head>`) lives in `components/` and is
-injected by `build.py`, so editing it once updates every page.
+Reuse the 480px, 768px, and 1024px breakpoints (`--bp-sm`, `--bp-md`, `--bp-lg`).
+CSS variables cannot be used directly in media query conditions, so these three
+values are repeated there. Shared header, footer, and `<head>` markup lives in
+`components/`; `build.py` injects it into the generated pages.
 
 ## Local Development
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.10+
+- Pandoc (used by `pypandoc` to render Markdown)
+- Poppler (`pdfinfo` and `pdftotext`) for PDF link titles; install `poppler-utils` on Debian/Ubuntu
 
 ### Setup
 
 1. Install dependencies:
    ```bash
-   pip install pyyaml markdown
+   pip install pyyaml markdown pypandoc
    ```
 
 2. Build the works:

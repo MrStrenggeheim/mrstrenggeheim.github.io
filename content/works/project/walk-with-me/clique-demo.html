@@ -22,15 +22,10 @@
     .node--flo { stroke: var(--demo-green); stroke-width: 3; }
     .names { fill: var(--text-primary); font-size: 19px; font-family: var(--font-family); text-anchor: middle; }
     .summary h2 { font-size: var(--font-size-base); margin-bottom: var(--space-sm); color: var(--text-primary); }
-    .groups { list-style: none; padding: 0; display: grid; gap: var(--space-sm); }
-    .groups button { width: 100%; padding: var(--space-sm); border: 1px solid var(--demo-green); font: inherit; font-size: var(--font-size-sm); color: var(--text-primary); background: transparent; text-align: left; cursor: pointer; }
-    .groups button[aria-pressed="true"] { border-color: var(--accent); }
-    .groups button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .groups { list-style: none; padding: 0; display: grid; gap: var(--control-gap); }
+    .groups button { width: 100%; justify-content: flex-start; text-align: left; }
     .summary p { font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-sm); }
-    .presets { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-md); }
-    .presets button { font: inherit; font-size: var(--font-size-xs); min-height: var(--control-height); border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary); padding: var(--space-xs) var(--space-sm); cursor: pointer; }
-    .presets button:hover { border-color: var(--demo-green); }
-    .presets button:focus-visible { outline: 2px solid var(--accent); outline-offset: var(--space-xs); }
+    .presets { display: flex; flex-wrap: wrap; gap: var(--control-gap); margin-top: var(--space-md); }
     @media (max-width: 480px) { .example { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -59,9 +54,9 @@
     </div>
   </div>
   <div class="presets" aria-label="Example friendship patterns">
-    <button type="button" data-preset="complete">Everyone connected</button>
-    <button type="button" data-preset="different">Different sizes</button>
-    <button type="button" data-preset="star">Only Flo knows everyone</button>
+    <button type="button" class="demo-button" data-preset="complete">Everyone connected</button>
+    <button type="button" class="demo-button" data-preset="different">Different sizes</button>
+    <button type="button" class="demo-button" data-preset="star">Only Flo knows everyone</button>
   </div>
   <script>
     const people = ['Flo', 'Maya', 'Leo', 'Nora'];
@@ -128,6 +123,7 @@
       for (const members of groups) {
         const li = document.createElement('li');
         const button = document.createElement('button');
+        button.className = 'demo-button';
         button.type = 'button';
         button.textContent = members.map(index => people[index]).join(' + ');
         button.setAttribute('aria-pressed', 'false');
