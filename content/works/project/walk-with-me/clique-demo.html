@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explore friendship cliques — Walk With Me</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/article-demo.css">
+  <style>
+    :root { --clique-hit-width: 22; --clique-graph-width: 380px; }
+    .example { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); align-items: center; margin-top: var(--space-sm); }
+    #graph { width: 100%; max-width: var(--clique-graph-width); display: block; margin: auto; overflow: visible; }
+    .connection { cursor: pointer; }
+    .line { stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 6 7; }
+    .connection[aria-pressed="true"] .line { stroke: var(--demo-green); stroke-width: 3; stroke-dasharray: none; }
+    .hit { stroke: transparent; stroke-width: var(--clique-hit-width); }
+    .connection:hover .line { stroke: var(--demo-green); stroke-width: 5; }
+    .connection:focus { outline: none; }
+    .connection.is-highlighted .line { stroke: var(--accent); stroke-width: 5; }
+    .node.is-highlighted { stroke: var(--accent); stroke-width: 3; }
+    .node { fill: var(--bg-secondary); stroke: var(--text-muted); stroke-width: 2; }
+    .node--flo { stroke: var(--demo-green); stroke-width: 3; }
+    .names { fill: var(--text-primary); font-size: 19px; font-family: var(--font-family); text-anchor: middle; }
+    .summary h2 { font-size: var(--font-size-base); margin-bottom: var(--space-sm); color: var(--text-primary); }
+    .groups { list-style: none; padding: 0; display: grid; gap: var(--space-sm); }
+    .groups button { width: 100%; padding: var(--space-sm); border: 1px solid var(--demo-green); font: inherit; font-size: var(--font-size-sm); color: var(--text-primary); background: transparent; text-align: left; cursor: pointer; }
+    .groups button[aria-pressed="true"] { border-color: var(--accent); }
+    .groups button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .summary p { font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-sm); }
+    .presets { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-md); }
+    .presets button { font: inherit; font-size: var(--font-size-xs); min-height: var(--control-height); border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary); padding: var(--space-xs) var(--space-sm); cursor: pointer; }
+    .presets button:hover { border-color: var(--demo-green); }
+    .presets button:focus-visible { outline: 2px solid var(--accent); outline-offset: var(--space-xs); }
+    @media (max-width: 480px) { .example { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="demo-header">
+    <h1>Who could walk with Flo?</h1>
+    <button type="button" class="demo-reset" id="reset" data-demo-reset aria-label="Reset example" title="Reset example"></button>
+  </div>
+  <p class="intro">Click a connection to add or remove a friendship. Everyone's time window overlaps in this example.</p>
+  <div class="example">
+    <svg id="graph" viewBox="0 0 400 300" role="group" aria-label="Editable friendship graph with Flo, Maya, Leo and Nora">
+      <g id="connections"></g>
+      <g pointer-events="none">
+        <circle data-person="0" class="node node--flo" cx="200" cy="150" r="23"></circle>
+        <circle data-person="1" class="node" cx="200" cy="45" r="23"></circle>
+        <circle data-person="2" class="node" cx="55" cy="240" r="23"></circle>
+        <circle data-person="3" class="node" cx="345" cy="240" r="23"></circle>
+        <g class="names"><text x="200" y="191">Flo</text><text x="200" y="12">Maya</text><text x="55" y="288">Leo</text><text x="345" y="288">Nora</text></g>
+      </g>
+    </svg>
+    <div class="summary" aria-live="polite" aria-atomic="true">
+      <h2 id="count">2 maximal groups</h2>
+      <ul class="groups" id="groups"></ul>
+      <p id="explanation"></p>
+      <p id="select-hint">Select a group to highlight its connections.</p>
+    </div>
+  </div>
+  <div class="presets" aria-label="Example friendship patterns">
+    <button type="button" data-preset="complete">Everyone connected</button>
+    <button type="button" data-preset="different">Different sizes</button>
+    <button type="button" data-preset="star">Only Flo knows everyone</button>
+  </div>
+  <script>
+    const people = ['Flo', 'Maya', 'Leo', 'Nora'];
+    const positions = [[200, 150], [200, 45], [55, 240], [345, 240]];
+    const edges = [[0,1], [0,2], [0,3], [1,2], [1,3], [2,3]];
+    const enabled = new Set(['0-1', '0-2', '0-3', '1-2', '1-3']);
+    const ns = 'http://www.w3.org/2000/svg';
+    const edgeElements = new Map();
+    for (const [a, b] of edges) {
+      const key = `${a}-${b}`;
+      const group = document.createElementNS(ns, 'g');
+      group.classList.add('connection');
+      group.id = `edge-${key}`;
+      group.setAttribute('role', 'button');
+      group.setAttribute('tabindex', '0');
+      group.setAttribute('aria-label', `${people[a]} and ${people[b]}: friendship`);
+      const title = document.createElementNS(ns, 'title');
+      title.textContent = `Toggle friendship: ${people[a]} and ${people[b]}`;
+      group.append(title);
+      for (const className of ['line', 'hit']) {
+        const line = document.createElementNS(ns, 'line');
+        line.setAttribute('class', className);
+        for (const [name, value] of Object.entries({ x1: positions[a][0], y1: positions[a][1], x2: positions[b][0], y2: positions[b][1] })) line.setAttribute(name, value);
+        group.append(line);
+      }
+      const toggle = () => { if (enabled.has(key)) enabled.delete(key); else enabled.add(key); update(); };
+      group.addEventListener('click', toggle);
+      group.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(); } });
+      document.getElementById('connections').append(group);
+      edgeElements.set(key, group);
+    }
+    function findGroups(adjacency) {
+      const groups = [];
+      function search(R, P, X) {
+        if (!P.size && !X.size) { if (R.size >= 2) groups.push([...R].sort()); return; }
+        const pivot = [...P, ...X][0];
+        const pivotNeighbors = adjacency.get(pivot) || new Set();
+        for (const v of [...P].filter(n => !pivotNeighbors.has(n))) {
+          const neighbors = adjacency.get(v) || new Set();
+          search(new Set([...R, v]), new Set([...P].filter(n => neighbors.has(n))), new Set([...X].filter(n => neighbors.has(n))));
+          P.delete(v); X.add(v);
+        }
+      }
+      search(new Set([0]), new Set(adjacency.get(0)), new Set());
+      return groups;
+    }
+    function highlight(members, selectedButton) {
+      const selected = new Set(members || []);
+      for (const [a,b] of edges) edgeElements.get(`${a}-${b}`).classList.toggle('is-highlighted', selected.has(a) && selected.has(b));
+      for (const node of document.querySelectorAll('[data-person]')) node.classList.toggle('is-highlighted', selected.has(Number(node.dataset.person)));
+      for (const button of document.querySelectorAll('#groups button')) button.setAttribute('aria-pressed', String(button === selectedButton));
+    }
+    function update() {
+      const adjacency = new Map(people.map((_, index) => [index, new Set()]));
+      for (const [a, b] of edges) {
+        const key = `${a}-${b}`;
+        edgeElements.get(key).setAttribute('aria-pressed', String(enabled.has(key)));
+        if (enabled.has(key)) { adjacency.get(a).add(b); adjacency.get(b).add(a); }
+      }
+      const groups = findGroups(adjacency);
+      document.getElementById('count').textContent = `${groups.length} maximal ${groups.length === 1 ? 'group' : 'groups'}`;
+      const list = document.getElementById('groups');
+      list.replaceChildren();
+      for (const members of groups) {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = members.map(index => people[index]).join(' + ');
+        button.setAttribute('aria-pressed', 'false');
+        button.addEventListener('click', () => button.getAttribute('aria-pressed') === 'true' ? highlight([], null) : highlight(members, button));
+        li.append(button); list.append(li);
+      }
+      highlight([], null);
+      document.getElementById('select-hint').hidden = !groups.length;
+      const complete = enabled.size === edges.length;
+      const differentSizes = new Set(groups.map(group => group.length)).size > 1;
+      document.getElementById('explanation').textContent = !groups.length ? 'Flo has no friendship edge. No group of two or more can be formed.' : complete ? 'Four people have 15 nonempty subsets, but only one maximal group. Any smaller group could still add someone.' : differentSizes ? 'Both groups are maximal: neither can be enlarged. Only the larger one is maximum. Each contains Flo.' : 'Each group contains Flo. Every pair is connected, and no other person can join without a missing edge.';
+    }
+    function setPattern(pattern) {
+      enabled.clear();
+      const patterns = {
+        original: ['0-1','0-2','0-3','1-2','1-3'],
+        complete: edges.map(([a,b]) => `${a}-${b}`),
+        different: ['0-1','0-2','0-3','1-2'],
+        star: ['0-1','0-2','0-3']
+      };
+      for (const key of patterns[pattern]) enabled.add(key);
+      update();
+    }
+    for (const button of document.querySelectorAll('[data-preset]')) button.addEventListener('click', () => setPattern(button.dataset.preset));
+    document.getElementById('reset').addEventListener('click', () => setPattern('original'));
+    update();
+  </script>
+  <script src="/js/article-embed.js"></script>
+</body>
+</html>

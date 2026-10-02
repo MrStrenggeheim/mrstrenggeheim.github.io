@@ -216,6 +216,7 @@ ARTICLE_TEMPLATE = """<!DOCTYPE html>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/toolbar/prism-toolbar.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js" defer></script>
   <script src="/js/code.js" defer></script>
+  <script src="/js/image-preview.js" defer></script>
 </head>
 <body>
   {header}
@@ -339,7 +340,15 @@ def process_markdown(md_content: str) -> str:
             flags=re.DOTALL
         )
         
-        # Pattern 2: Simple pre with class (--no-highlight mode)
+        # Pattern 2: Pre with a plain code child (--no-highlight mode)
+        html = re.sub(
+            r'<pre class="(\w+)"><code>(.*?)</code></pre>',
+            r'<pre><code class="language-\1">\2</code></pre>',
+            html,
+            flags=re.DOTALL
+        )
+
+        # Pattern 2 fallback: Simple pre with class and no code child
         html = re.sub(
             r'<pre class="(\w+)">(.*?)</pre>',
             r'<pre><code class="language-\1">\2</code></pre>',

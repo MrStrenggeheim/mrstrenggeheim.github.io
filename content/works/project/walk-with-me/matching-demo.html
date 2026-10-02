@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Finding a shared window — Walk With Me</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/article-demo.css">
+  <style>
+    :root { --demo-name-width: 5.5rem; --demo-row-height: 3rem; --demo-handle-width: 1.5rem; --demo-handle-height: 2.75rem; }
+    .chart { margin: var(--space-md) 0; }
+    .row { display: grid; grid-template-columns: var(--demo-name-width) 1fr; align-items: center; height: var(--demo-row-height); gap: var(--space-sm); }
+    .name { font-size: var(--font-size-sm); color: var(--text-primary); }
+    .person { display: flex; align-items: center; gap: var(--space-sm); min-height: var(--control-height); cursor: pointer; }
+    .person input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--demo-green); cursor: pointer; }
+    .track { height: 100%; position: relative; background: repeating-linear-gradient(to right, var(--border) 0 1px, transparent 1px 33.333%); margin-inline: calc(var(--demo-handle-width) / 2); }
+    .bar { position: absolute; top: calc(50% - .5rem); height: 1rem; border-radius: var(--space-xs); background: color-mix(in srgb, var(--demo-green) 20%, var(--bg-tertiary)); }
+    .edge { position: absolute; top: 50%; width: var(--demo-handle-width); height: var(--demo-handle-height); display: grid; place-items: center; padding: 0; transform: translate(-50%, -50%); border: 0; background: transparent; color: var(--demo-green); cursor: ew-resize; touch-action: none; user-select: none; z-index: 1; }
+    .edge::before { content: ''; position: absolute; width: 1.1rem; height: 1.8rem; border: 1.5px solid var(--demo-green); border-radius: .4rem; background: var(--bg-primary); }
+    .edge svg { position: relative; width: .6rem; height: .9rem; pointer-events: none; }
+    .edge::after { content: attr(data-time); position: absolute; bottom: calc(100% - .1rem); left: 50%; transform: translateX(-50%); padding: .15rem .3rem; border-radius: var(--space-xs); background: var(--text-primary); color: var(--bg-primary); font: var(--font-size-xs) var(--font-mono); white-space: nowrap; opacity: 0; pointer-events: none; }
+    .edge[data-edge="start"] { left: 0; }
+    .edge[data-edge="end"] { left: 100%; }
+    .edge:hover, .edge:focus, .edge.is-dragging { color: var(--bg-primary); outline: none; z-index: 2; }
+    .edge:hover::before, .edge:focus::before, .edge.is-dragging::before { background: var(--demo-green); }
+    .edge:hover::after, .edge:focus::after, .edge.is-dragging::after { opacity: 1; }
+    .row.disabled .track, .row.disabled .name span { opacity: .35; }
+    .row.disabled .edge { visibility: hidden; }
+    .overlap .bar { background: var(--demo-green); }
+    .overlap .name { padding-left: 1.5rem; font-weight: 700; }
+    .ticks { margin-left: calc(var(--demo-name-width) + var(--space-sm) + var(--demo-handle-width) / 2); margin-right: calc(var(--demo-handle-width) / 2); display: flex; justify-content: space-between; font-size: var(--font-size-xs); color: var(--text-secondary); }
+    .result { margin-top: var(--space-sm); padding-top: var(--space-md); border-top: 1px solid var(--border); }
+    .result strong { display: block; font-size: var(--font-size-lg); color: var(--demo-green); }
+    .result .limits { font-size: var(--font-size-xs); }
+    .result p { font-size: var(--font-size-sm); color: var(--text-secondary); }
+    .result[data-valid="false"] strong { color: var(--accent); }
+    @media (max-width: 360px) { :root { --demo-name-width: 5rem; } }
+  </style>
+</head>
+<body>
+  <div class="demo-header">
+    <h1>When can everyone start?</h1>
+    <button type="button" class="demo-reset" id="reset" data-demo-reset aria-label="Reset example" title="Reset example"></button>
+  </div>
+  <p class="intro" id="drag-hint">Choose who's coming. Drag the green grips to change their availability.</p>
+  <div class="chart" role="group" aria-label="Editable availability timeline from 17:00 to 20:00">
+    <div id="friend-rows"></div>
+    <div class="row overlap"><span class="name">Shared</span><div class="track"><span class="bar" id="shared-bar"></span></div></div>
+    <div class="ticks"><span>17:00</span><span>18:00</span><span>19:00</span><span>20:00</span></div>
+  </div>
+  <div class="result" id="result" data-valid="true" aria-live="polite" aria-atomic="true">
+    <strong id="start">Earliest start: 18:00</strong>
+    <p id="window">Shared window: 18:00–18:45 · 45 minutes</p>
+    <p class="limits" id="limits"></p>
+  </div>
+  <script>
+    const initial = [
+      { id: 'flo', name: 'Flo', start: 15, end: 120, selected: true },
+      { id: 'maya', name: 'Maya', start: 45, end: 150, selected: true },
+      { id: 'leo', name: 'Leo', start: 60, end: 105, selected: true },
+      { id: 'nora', name: 'Nora', start: 90, end: 180, selected: false }
+    ];
+    const friends = initial.map(friend => ({ ...friend }));
+    const time = minutes => `${17 + Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`;
+    const rows = document.getElementById('friend-rows');
+    for (const friend of friends) {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.id = `${friend.id}-row`;
+      const grip = '<svg viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="3" r="1"/><circle cx="7" cy="3" r="1"/><circle cx="3" cy="8" r="1"/><circle cx="7" cy="8" r="1"/><circle cx="3" cy="13" r="1"/><circle cx="7" cy="13" r="1"/></svg>';
+      row.innerHTML = `<label class="name person"><input type="checkbox" id="include-${friend.id}" aria-label="Include ${friend.name}" ${friend.selected ? 'checked' : ''}><span>${friend.name}</span></label><div class="track"><span class="bar"><button type="button" class="edge" id="${friend.id}-start" data-edge="start" role="slider" aria-label="${friend.name}: available from" aria-describedby="drag-hint">${grip}</button><button type="button" class="edge" id="${friend.id}-end" data-edge="end" role="slider" aria-label="${friend.name}: available until" aria-describedby="drag-hint">${grip}</button></span></div>`;
+      rows.append(row);
+      friend.row = row;
+      friend.checkbox = row.querySelector('input');
+      friend.checkbox.addEventListener('change', () => { friend.selected = friend.checkbox.checked; update(); });
+      function change(value, side) {
+        friend[side] = Math.max(side === 'start' ? 0 : friend.start + 15, Math.min(side === 'start' ? friend.end - 15 : 180, Math.round(value / 15) * 15));
+        update();
+      }
+      for (const edge of row.querySelectorAll('.edge')) {
+        const side = edge.dataset.edge;
+        edge.addEventListener('pointerdown', event => {
+          if (event.button !== 0 || edge.disabled) return;
+          event.preventDefault();
+          const track = row.querySelector('.track').getBoundingClientRect();
+          // Narrow ranges can have overlapping touch targets. Choose the nearest
+          // endpoint so neither handle can cover the other's center.
+          const startDistance = Math.abs(event.clientX - (track.left + friend.start / 180 * track.width));
+          const endDistance = Math.abs(event.clientX - (track.left + friend.end / 180 * track.width));
+          const dragSide = startDistance <= endDistance ? 'start' : 'end';
+          const dragEdge = row.querySelector(`[data-edge="${dragSide}"]`);
+          dragEdge.focus();
+          const startX = event.clientX;
+          const startValue = friend[dragSide];
+          dragEdge.classList.add('is-dragging');
+          dragEdge.setPointerCapture(event.pointerId);
+          const move = e => change(startValue + (e.clientX - startX) / track.width * 180, dragSide);
+          const finish = () => {
+            dragEdge.classList.remove('is-dragging');
+            dragEdge.removeEventListener('pointermove', move);
+            dragEdge.removeEventListener('pointerup', finish);
+            dragEdge.removeEventListener('pointercancel', finish);
+            dragEdge.removeEventListener('lostpointercapture', finish);
+          };
+          dragEdge.addEventListener('pointermove', move);
+          dragEdge.addEventListener('pointerup', finish);
+          dragEdge.addEventListener('pointercancel', finish);
+          dragEdge.addEventListener('lostpointercapture', finish);
+        });
+        edge.addEventListener('keydown', event => {
+          const direction = { ArrowLeft: -15, ArrowDown: -15, ArrowRight: 15, ArrowUp: 15 }[event.key];
+          if (direction !== undefined) { event.preventDefault(); change(friend[side] + direction, side); }
+          if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); change(event.key === 'Home' ? 0 : 180, side); }
+        });
+      }
+    }
+    function position(el, start, end) {
+      el.style.left = `${start / 180 * 100}%`;
+      el.style.width = `${Math.max(0, end - start) / 180 * 100}%`;
+    }
+    function update() {
+      for (const friend of friends) {
+        const enabled = friend.selected;
+        friend.row.classList.toggle('disabled', !enabled);
+        position(friend.row.querySelector('.bar'), friend.start, friend.end);
+        for (const edge of friend.row.querySelectorAll('.edge')) {
+          const side = edge.dataset.edge;
+          edge.disabled = !enabled;
+          edge.setAttribute('aria-valuemin', side === 'start' ? '0' : String(friend.start + 15));
+          edge.setAttribute('aria-valuemax', side === 'start' ? String(friend.end - 15) : '180');
+          edge.setAttribute('aria-valuenow', String(friend[side]));
+          edge.setAttribute('aria-valuetext', time(friend[side]));
+          edge.dataset.time = time(friend[side]);
+        }
+      }
+      const active = friends.filter(friend => friend.selected);
+      const result = document.getElementById('result');
+      const sharedBar = document.getElementById('shared-bar');
+      const startText = document.getElementById('start');
+      const windowText = document.getElementById('window');
+      const limitsText = document.getElementById('limits');
+      if (!active.length) {
+        position(sharedBar, 0, 0);
+        result.dataset.valid = 'false';
+        startText.textContent = 'Choose your walking company';
+        windowText.textContent = 'Select at least two people to find a shared window.';
+        limitsText.textContent = '';
+        return;
+      }
+      const start = Math.max(...active.map(friend => friend.start));
+      const end = Math.min(...active.map(friend => friend.end));
+      position(sharedBar, start, end);
+      result.dataset.valid = String(active.length >= 2 && start < end);
+      startText.textContent = active.length === 1 ? 'One person, no group yet' : start <= end ? `Earliest start: ${time(start)}` : 'No shared window';
+      const latest = active.filter(friend => friend.start === start).map(friend => friend.name).join(', ');
+      const earliest = active.filter(friend => friend.end === end).map(friend => friend.name).join(', ');
+      limitsText.textContent = active.length >= 2 ? `Latest beginning: ${latest} · Earliest ending: ${earliest}` : '';
+      windowText.textContent = active.length === 1 ? `${active[0].name} is free ${time(start)}–${time(end)}. Select someone else to find a shared window.` : start === end ? `Only ${time(start)} overlaps. A shared instant is not time for a walk.` : start < end ? `Shared window: ${time(start)}–${time(end)} · ${end - start} minutes` : 'Someone needs to change their availability.';
+    }
+    document.getElementById('reset').addEventListener('click', () => {
+      friends.forEach((friend, index) => { Object.assign(friend, initial[index]); friend.checkbox.checked = friend.selected; });
+      update();
+    });
+    update();
+  </script>
+  <script src="/js/article-embed.js"></script>
+</body>
+</html>

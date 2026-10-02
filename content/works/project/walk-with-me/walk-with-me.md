@@ -1,0 +1,393 @@
+---
+title: "Walk With Me"
+subtitle: "A one-week bet, three months of procrastination, and a scheduling app."
+type: project
+date: 2026-10-02
+author: Florian Hunecke
+tags: [Web Development, Algorithms, Agentic Coding, Firebase, PWA, Visualization]
+thumbnail: /assets/thumbnails/walk-with-me.webp
+links:
+  App: https://walkwith.meme
+---
+
+During Covid, my old friend group developed a considerable enthusiasm for walking. This carried on through our studies, to the point where we would go out every day, occasionally several times a day. Naturally, we had a dedicated WhatsApp group for this. Less naturally, arranging a walk sometimes seemed to require as much coordination as the walk itself.
+
+Someone would announce that they were available. Someone else could join later, but only until a certain time. A third person lived at the other end of town. By the time we had agreed on a meeting point, the first person's availability might already have changed.
+
+This would require another message, which would also reach all the people who had known from the beginning that they could not join anyway. At some point there was a small administrative job attached to going outside.
+
+Over the Christmas holidays 2025, my friends challenged me to build an app for it in a week. I took that reasonably personally. A proof of concept followed, and then about three months of work in my free time. Conveniently, this also provided a seemingly productive way of procrastinating my exams. I can therefore only partially recommend the original deadline.
+
+## A walk has an expiry date
+
+The first useful observation was that “I want to go for a walk” has a beginning and an end. In a chat, this information is spread across several messages and has to be reconstructed by everyone reading them. In an app, it can simply be an availability window.
+
+In Walk With Me, we specify when we are available and where we would start. The app suggests a compatible group and starting time for us to confirm. New people can join as they become available; notifications tell us when a match appears, someone joins, or friends have agreed to go.
+
+The aim was to remove the recurring bookkeeping: checking who is still available and repeating the current plan. There is still a chat, attached to a particular occasion rather than accumulating every failed attempt to organise a walk since the beginning of the pandemic. Notification settings and distance filters help keep the remaining chatter useful.
+
+```{=html}
+<link rel="stylesheet" href="/works/walk-with-me/phone-screens.css">
+<figure class="article-gallery">
+  <div class="article-gallery__grid">
+  <div class="wwm-phone">
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/home-light.webp" aria-label="Open the full home screen in light mode"><img src="/works/walk-with-me/home-light.webp" alt="The app home screen with the branded walking icon, fictional friends with avatars, their availability, and a weather forecast (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/home-dark.webp" aria-label="Open the full home screen in dark mode"><img src="/works/walk-with-me/home-dark.webp" alt="The app home screen with the branded walking icon, fictional friends with avatars, their availability, and a weather forecast (dark mode)." width="1170" height="2532" loading="lazy"></a>
+  </div>
+  <div class="wwm-phone">
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/group-vote-light.webp" aria-label="Open the full chat screen in light mode"><img src="/works/walk-with-me/group-vote-light.webp" alt="The matched group chat with a location proposal, partial voting and a reply to a friend’s message (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/group-vote-dark.webp" aria-label="Open the full chat screen in dark mode"><img src="/works/walk-with-me/group-vote-dark.webp" alt="The matched group chat with a location proposal, partial voting and a reply to a friend’s message (dark mode)." width="1170" height="2532" loading="lazy"></a>
+  </div>
+  </div>
+  <figcaption>A walk at 18:30, with four people already on board. The meeting point is still up for a vote; snacks are already being discussed.</figcaption>
+</figure>
+```
+
+### One change, one useful notification
+
+Becoming ready can mean several things at once: a friend is available, a friend joins an arrangement, and a new match appears. Sending a separate notification for every interpretation would recreate quite a bit of the WhatsApp problem.
+
+The backend therefore collects notification candidates per recipient and keeps the most useful one. The priority is:
+
+**New match → member joined → friend ready**
+
+Stable stacking keys let later notices replace or group earlier ones. `AsyncLocalStorage` gives each backend invocation its own notification context, so simultaneous readiness events do not accidentally share a queue just because the server handles them in the same process.
+
+## Finding the first possible moment
+
+The time calculation is pleasantly small: take the latest beginning and the earliest ending of everyone's availability. If the beginning is no later than the ending, we have a shared window and its earliest possible start.
+
+For example:
+
+| Friend | Available from | Available until |
+| --- | --- | --- |
+| Flo | 17:15 | 19:00 |
+| Maya | 17:45 | 19:30 |
+| Leo | 18:00 | 18:45 |
+| Nora, joining later | 18:30 | 20:00 |
+
+The first three can start at 18:00. With Nora, the shared window becomes 18:30 to 18:45. The maths is easy enough; whether fifteen minutes is an appealing walk remains a human decision.
+
+```{=html}
+<figure class="article-interactive">
+  <iframe src="/works/walk-with-me/matching-demo.html" title="Interactive availability matching: select friends and drag the ends of their time spans to see the shared window" width="800" height="690" loading="lazy"></iframe>
+  <figcaption>Choose the participants and move the marked edges of their time spans. This simplified example holds friendship and location compatibility fixed; it illustrates the time intersection used by the matcher.</figcaption>
+</figure>
+```
+
+### Moving only when something changes
+
+I also considered a **sweep-line algorithm over availability interval endpoints**. Sort the beginnings and endings chronologically, then sweep along the timeline, adding and removing people as their windows open and close. Between successive endpoints, the active set cannot change.
+
+For this sketch, write a window as $I_u=[s_u,e_u)$ and the distinct endpoints as $t_1<\cdots<t_m$. On the segment $[t_i,t_{i+1})$, the active set is
+
+$$
+A_i=\{u\mid s_u\le t_i<e_u\}.
+$$
+
+With $n$ windows, there are at most $2n$ endpoints and $2n-1$ bounded segments to examine. There is no need to sample every minute: holding other compatibility rules fixed, new combinations appear only at the endpoints. This approach could also handle several separate slots per person.
+
+The half-open intervals simplify this sketch; the app's overlap check includes shared endpoints. Availability alone does not make a suitable group, which leads to a graph and then Bron–Kerbosch. In the current matcher, time overlap goes directly into the graph's edges.
+
+### Who belongs in the same group?
+
+In the default walking group, being friends with me does not automatically mean that two other people are friends with each other.
+
+After candidate filtering, the default walking group uses closed availability windows $I_u=[s_u,e_u]$. Its graph is
+
+$$
+\begin{aligned}
+G&=(V,E),\\
+\{u,v\}\in E&\iff u\sim v\\
+&\quad\land\;I_u\cap I_v\ne\varnothing.
+\end{aligned}
+$$
+
+where $u\sim v$ means accepted friendship. A **clique** is a set where every distinct pair has an edge. Fixed activity groups use membership in that group in place of the friendship requirement.
+
+The matcher uses **Bron–Kerbosch with pivoting** to find maximal cliques containing the person whose availability changed: groups to which no further eligible person can be added.
+
+```{=html}
+<figure class="article-interactive">
+  <iframe src="/works/walk-with-me/clique-demo.html" title="Interactive friendship graph: toggle connections to explore maximal walking groups" width="800" height="560" loading="lazy"></iframe>
+  <figcaption>Toggle a connection or try a preset. Time compatibility is held fixed. The widget runs a pivoted Bron–Kerbosch search for maximal groups containing Flo.</figcaption>
+</figure>
+```
+
+### The pivoted search
+
+The search keeps three sets:
+
+| Set | What it contains |
+| --- | --- |
+| `R` | The group currently being built |
+| `P` | People who could still join that group |
+| `X` | People already explored on another branch |
+
+Adding a person restricts both `P` and `X` to that person's neighbours. When both are empty, the current clique is maximal.
+
+A useful distinction hides in one letter. A **maximum** clique is the largest group; a **maximal** clique is one that cannot be enlarged. Try “Different sizes” above: Flo, Maya and Leo form a triangle, while Flo and Nora form a pair. Both are maximal, even though one is smaller. Connecting all four people leaves fifteen nonempty subsets, but only one maximal group.
+
+Choosing proposals that share no people would be another problem: **[set packing](https://mat.tepper.cmu.edu/orclass/integer/node9.html)**. For our walks, showing compatible opportunities and letting us choose was enough.
+
+The pivot is the useful trick. Instead of branching on every remaining candidate, the search branches only on candidates outside the pivot's neighbourhood. Any maximal clique extending the current group must contain the pivot or someone not connected to it; otherwise the pivot could still be added.
+
+This inner loop is a cornerstone of the app's matcher:
+
+```typescript
+const pivot = [...P, ...X][0];
+const pivotNeighbors = adjacency.get(pivot) || new Set();
+
+for (const v of [...P].filter(n => !pivotNeighbors.has(n))) {
+    const neighbors = adjacency.get(v) || new Set();
+    bronKerbosch(
+        new Set([...R, v]),
+        new Set([...P].filter(n => neighbors.has(n))),
+        new Set([...X].filter(n => neighbors.has(n)))
+    );
+    P.delete(v);
+    X.add(v);
+}
+```
+
+### From a clique to a concrete time
+
+For each resulting clique, the common window is the interval intersection:
+
+$$
+\begin{aligned}
+s_C&=\max_{u\in C}s_u,\\
+e_C&=\min_{u\in C}e_u,\\
+I_C&=[s_C,e_C]\quad\text{if }s_C\le e_C.
+\end{aligned}
+$$
+
+If $s_C>e_C$, there is no common window. Equality gives only a shared instant—mathematically an overlap, but not much of a walk.
+
+This is the **[Helly property for intervals](https://www.math.utah.edu/~treiberg/HellySlides.pdf)**: pairwise overlap in a finite collection of continuous intervals guarantees a common point. The person who starts latest and the one who finishes earliest must overlap too. Their boundaries therefore give a window shared by everyone.
+
+I quite like that an ordinary interface choice—one continuous availability window per person—gives the matcher this guarantee. With several separate slots, every pair might find a time without there being one for all three. The implementation uses the common beginning for its automatic starting-time proposal.
+
+Pivoting does not make clique enumeration cheap for arbitrarily large graphs. The app prioritises nearby candidates and caps the matching candidate set at twenty. For our use case, a bounded search was considerably more useful than an impressive algorithm left to run without limits.
+
+### Both sides choose a range
+
+For location-based matching, the app compares each candidate $u$ with the person whose availability changed, $q$, using **Haversine distance**:
+
+$$
+d_H(p_q,p_u)\le\min(r_q,r_u).
+$$
+
+Here $p$ is a position and $r$ the person's chosen range. Both sides have to agree to the distance. Someone willing to travel three kilometres should not automatically pull in a friend who only wants to travel one. This filter compares candidates with the triggering person, not every candidate pair.
+
+These checks are a practical first filter; they do not calculate walking routes or choose the perfect walk for us.
+
+## The meeting point keeps moving
+
+When someone joins, the suggested meeting point should take their position into account. A detail I quite like is that the previous average and member count are enough to update the centre, without fetching every coordinate again.
+
+Treating the coordinates as a two-component vector, the **incremental mean** is
+
+$$
+\begin{aligned}
+\bar p_{n+1}
+&=\frac{n\bar p_n+p_{\mathrm{new}}}{n+1}\\
+&=\bar p_n+\frac{p_{\mathrm{new}}-\bar p_n}{n+1}.
+\end{aligned}
+$$
+
+Updating the mean takes $O(1)$ work. This is the actual helper used when extending a group:
+
+```typescript
+export function updateAnchorOnJoin(
+    oldAnchor: { lat: number; lng: number },
+    count: number,
+    userLoc: { lat: number; lng: number }
+): { lat: number; lng: number } {
+    return {
+        lat: ((oldAnchor.lat * count) + userLoc.lat) / (count + 1),
+        lng: ((oldAnchor.lng * count) + userLoc.lng) / (count + 1),
+    };
+}
+```
+
+It is a running arithmetic average of coordinates, so it suggests a centre, rather than a necessarily suitable place to stand. There might be a building there. We can adjust the proposal ourselves, and the interactive map makes it easier to see what is nearby.
+
+### Knowing when the algorithm should stop
+
+The centre should move when someone joins. A café we have deliberately chosen should stay chosen. The same location field therefore needs to remember whether it is still an automatic suggestion or already a human decision.
+
+Group metadata carries an update source (`auto`, `manual`, or `vote`) and separate override flags for the time, place and category. The matcher can update its own suggestions while preserving decisions we have made ourselves.
+
+A location proposal can also be put to a majority vote in the chat. Counting votes and applying the result happen in one **transaction**, so simultaneous votes do not overwrite one another. The majority is recalculated from the current membership: with four people, two yes votes are still one short. A passed vote marks the place as a human decision. Remembering where a value came from turned out to matter almost as much as calculating it.
+
+```{=html}
+<figure class="article-gallery">
+  <div class="article-gallery__grid article-gallery__grid--single">
+  <div class="wwm-phone">
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/group-vote-light.webp" aria-label="Open the full location vote screen in light mode"><img src="/works/walk-with-me/group-vote-light.webp" alt="A location proposal in the four-person chat, showing two yes votes while three are required for a majority (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/group-vote-dark.webp" aria-label="Open the full location vote screen in dark mode"><img src="/works/walk-with-me/group-vote-dark.webp" alt="A location proposal in the four-person chat, showing two yes votes while three are required for a majority (dark mode)." width="1170" height="2532" loading="lazy"></a>
+  </div>
+  </div>
+  <figcaption>Two yes votes, one still needed. The location proposal lives in the conversation it belongs to, and a passed vote becomes a decision the automatic matcher preserves.</figcaption>
+</figure>
+```
+
+```{=html}
+<figure class="article-gallery">
+  <div class="article-gallery__grid">
+  <div class="wwm-phone">
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/context-detail-light.webp" aria-label="Open Maya’s map popup in light mode"><img src="/works/walk-with-me/context-detail-light.webp" alt="Walk With Me context with Maya’s avatar, location and availability popup open above her map marker (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/context-detail-dark.webp" aria-label="Open Maya’s map popup in dark mode"><img src="/works/walk-with-me/context-detail-dark.webp" alt="Walk With Me context with Maya’s avatar, location and availability popup open above her map marker (dark mode)." width="1170" height="2532" loading="lazy"></a>
+  </div>
+  <div class="wwm-phone">
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/context-snacks-light.webp" aria-label="Open the snack POI map in light mode"><img src="/works/walk-with-me/context-snacks-light.webp" alt="The same Walk With Me context with snack and food points of interest activated around the friends’ meeting area (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/context-snacks-dark.webp" aria-label="Open the snack POI map in dark mode"><img src="/works/walk-with-me/context-snacks-dark.webp" alt="The same Walk With Me context with snack and food points of interest activated around the friends’ meeting area (dark mode)." width="1170" height="2532" loading="lazy"></a>
+  </div>
+  </div>
+  <figcaption>Maya’s current offer on the left; nearby snack and food stops on the right. Finding a time is only part of the arrangement.</figcaption>
+</figure>
+```
+
+### A small scheduling system for snacks
+
+Adding parking and supermarkets sounded like a fairly small favour to our walks. It ended up requiring a coordinated request system of its own. Dragging a map produces overlapping requests; dragging it back should reuse old results, while a late answer for somewhere else should not take over the screen.
+
+The points-of-interest client breaks the map into fixed tiles and shares the machinery across the different categories:
+
+| Mechanism | What it does here |
+| --- | --- |
+| **LRU cache** and IndexedDB | Reuse tiles; LRU evicts the least recently used, rather than simply the oldest |
+| **Request coalescing** | Share one unfinished request among callers asking for the same tile |
+| **Batching** | Combine different new tiles into one request |
+| **Backpressure** | Send work through a common FIFO gate, with one Overpass request in flight in that browser context |
+| **Generation counter** | Ignore callbacks belonging to an old viewport, even if their request finishes later |
+
+Coalescing and batching sound similar, but solve different problems: one avoids doing the same work twice, the other bundles different work. Old queued tiles can be discarded; requests already sent can still finish and warm the cache.
+
+Failures release the queue in a `finally` block, and rate-limit responses pause it. Nearby tiles can be prefetched during idle time. It is quite a lot of machinery behind the question of where to buy snacks, but panning a map makes the reasons visible very quickly.
+
+## An app is also its data model
+
+The frontend uses React and TypeScript, Zustand for state, and Leaflet for maps. Firebase handles authentication, realtime data and backend workflows. Firestore subscriptions keep the screens current. The data model needed considerably more thought than I had allowed for in the one-week bet.
+
+There are three kinds of data with deliberately different lifetimes:
+
+| Data | Its job | Its lifetime |
+| --- | --- | --- |
+| Activity group | Define the people, activity and matching mode | Ongoing |
+| Occasion group | Coordinate a particular meeting and its chat | Temporary |
+| Match record | Keep lightweight history for statistics | Lasting |
+
+A gym group can continue to exist indefinitely, while Tuesday's arrangement should eventually disappear from the active screen. The match record can remain without keeping the entire temporary conversation alive.
+
+Temporary groups use a renewable **lease**: meaningful activity pushes their expiry into the future. A separate **TTL** makes old data eligible for deletion. Expiring on screen and physically removing records are deliberately different jobs; we need not wait for a cleanup task to discover that yesterday's invitation is over.
+
+Group extensions use transactions, and **canonicalisation** helps recognise duplicate proposals: sort the member IDs, include the activity, and hash that representation. `[Flo, Maya]` and `[Maya, Flo]` then have the same fingerprint. These details matter particularly when several people become available almost simultaneously. “Just add another person” becomes less simple when two backend events try to do it at once.
+
+### A cancelled offer should stay cancelled
+
+The frontend shows readiness changes before the server confirms them: **optimistic UI**. An older subscription snapshot could then bring my offer back after I press Stop.
+
+Cancelling therefore needs a **tombstone**, a remembered deletion: a pending `null`, keyed by person and activity. It wins over the older snapshot until the server confirms the offer's absence.
+
+After collecting the server's offers, this excerpt overlays pending local changes:
+
+```typescript
+for (const [key, pending] of Object.entries(pendingByKey)) {
+    if (pending === null) {
+        mergedByKey.delete(key);
+        continue;
+    }
+    mergedByKey.set(key, pending);
+}
+```
+
+A failed write restores the previous pending state. It is slightly counterintuitive that removing information requires temporarily keeping some information about its removal.
+
+### The privacy questions I left open
+
+I also spent time thinking about end-to-end encryption when people dynamically join a conversation. A new participant changes who should have access to which messages. Another question was whether the app could compare our locations without letting the server read them. Encrypting coordinates is easy to suggest. Calculating with them afterwards is the less convenient part.
+
+Two names helped separate the questions. A **zero-knowledge proof** proves a statement about a secret witness without revealing that witness. **Secure multiparty computation** lets several parties calculate something from inputs they keep private. [NIST's overview](https://csrc.nist.gov/Projects/pec/pec-tools) gives a useful introduction to both. For our matcher, I concluded that if each friend knows only their own coordinates, a proof alone does not supply the other private input needed to compare the two locations.
+
+I considered coarse server-side filtering and exact matching on friends' devices, too. A phone that is offline or whose PWA is sleeping is an awkward place to put an essential part of the scheduler. There is also **metadata leakage**: concealing coordinates helps less if notification recipients reveal who was nearby. These remained design explorations. The current app uses server-readable coordinates and messages.
+
+## Learning to work with agents
+
+This project was my introduction to agentic coding, mostly with Claude Code. I did the whole thing on the $20 plan, which added another constraint to an already somewhat optimistic schedule. I had to learn how to give an agent enough context to make progress without spending the next session explaining the same decisions again.
+
+Repository instructions gradually recorded architectural decisions, shared frontend/backend contracts, data shapes and checks to run. Having the reasoning alongside the code helped stop agents from reopening solved problems or introducing another implementation of logic that already existed.
+
+GitHub Actions handled builds, automated tests and deployments; open pull requests received Firebase Hosting previews. I could try a change on my phone, notice an awkward interaction, and ask the agent to adapt it.
+
+```{=html}
+<figure class="article-diagram">
+  <div class="article-flow" role="group" aria-label="The development feedback loop">
+    <div class="article-flow__step"><span>01 / Describe</span><strong class="article-card__title">A change to try</strong><p>Explain the problem and preserve earlier decisions.</p></div>
+    <div class="article-flow__step"><span>02 / Develop</span><strong class="article-card__title">Work with the agent</strong><p>Implement, review, and open a pull request.</p></div>
+    <div class="article-flow__step"><span>03 / Build</span><strong class="article-card__title">A hosting preview</strong><p>GitHub Actions builds a version with its own preview link.</p></div>
+    <div class="article-flow__step"><span>04 / Try</span><strong class="article-card__title">Open it on my phone</strong><p>Check the actual interaction, spacing and feel.</p></div>
+    <div class="article-flow__step"><span>05 / Observe</span><strong class="article-card__title">Feed back what I find</strong><p>Give the agent concrete changes for the next iteration.</p></div>
+    <div class="article-flow__step"><span>06 / Repeat</span><strong class="article-card__title">Keep the useful parts</strong><p>Return to the change with the new observations.</p></div>
+  </div>
+  <figcaption>The phone-preview loop became part of development: make a change, try it on my phone, and feed the observations back to the agent.</figcaption>
+</figure>
+```
+
+### The phones, and then the people
+
+The most difficult practical issue was getting the experience to work across our different iOS and Android devices. Without an Apple developer account, I settled on a progressive web app. It could be added to the home screen and gave us a working proof of concept, while leaving some platform-dependent limitations.
+
+Then came the other deployment problem: convincing the whole friend group to use it. The experience had to be at least as convenient as sending a message to the group everyone already had. A clever matching algorithm alone was unlikely to win that argument. The cleaner conversations, maps, useful extras and history made the case much more convincing.
+
+## Walks, gym sessions, gaming evenings
+
+Somewhere along the way, I realised that the recurring element was the activity itself. The time could change on every occasion. Walking was one example; gym visits and gaming evenings had much the same coordination problem.
+
+This led to three matching modes. Location matters for a walk. For a gaming group, the relevant choice might be which game everyone wants to play. If we always meet at the same gym, time can be the only changing parameter. Permanent groups define that context, and each new availability window produces another opportunity to get together.
+
+```{=html}
+<figure class="article-diagram">
+  <div class="article-modes" role="group" aria-label="Three matching modes">
+    <div class="article-mode"><span>01 / Location</span><strong class="article-card__title">A walk nearby</strong><p>Overlapping time and compatible location ranges.</p></div>
+    <div class="article-mode"><span>02 / Topic</span><strong class="article-card__title">A game together</strong><p>Overlapping time and a compatible game choice.</p></div>
+    <div class="article-mode"><span>03 / Time</span><strong class="article-card__title">The same gym or table</strong><p>A fixed group and activity. Only availability changes.</p></div>
+  </div>
+  <figcaption>The same availability model, with a different question about compatibility.</figcaption>
+</figure>
+```
+
+### Statistics, and a little competition
+
+I also enjoyed adding statistics and the usual small pieces of gamification: streaks, scores and leaderboards. There are calendars, frequent partners, monthly match counts, geographic history and time-of-day patterns.
+
+A readiness streak measures how consistently someone offered to join, which is useful to distinguish from actually completing a walk. The statistics are based on availability and accepted matches, rather than GPS-verified exercise.
+
+Playing with streaks was fun, particularly when it motivated some friends to become ready for a walk a little more often. I had accidentally given our walking habit a small competitive element.
+
+There is also “streak on ice”: accepted matches with a partner earn a little protection for missed readiness days. The ice balance is **derived state**: the app replays readiness and accepted-match history chronologically, with at most three ice available per group. Frontend and backend share the derivation function. It is easier for the calendar and public stats to agree when both literally use the same definition, rather than maintaining another counter in several places.
+
+```{=html}
+<figure class="article-gallery">
+  <div class="article-gallery__grid">
+  <div class="wwm-phone">
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/stats-light.webp" aria-label="Open the full activity statistics screen in light mode"><img src="/works/walk-with-me/stats-light.webp" alt="Activity statistics with the fictional friends’ avatars, a readiness streak, match score, and a September calendar containing three iced days (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/stats-dark.webp" aria-label="Open the full activity statistics screen in dark mode"><img src="/works/walk-with-me/stats-dark.webp" alt="Activity statistics with the fictional friends’ avatars, a readiness streak, match score, and a September calendar containing three iced days (dark mode)." width="1170" height="2532" loading="lazy"></a>
+  </div>
+  <div class="wwm-phone">
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/stats-charts-light.webp" aria-label="Open the full analytics screen in light mode"><img src="/works/walk-with-me/stats-charts-light.webp" alt="Time-of-day patterns, monthly match counts and frequent partners derived from the same fictional accepted-match history (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/stats-charts-dark.webp" aria-label="Open the full analytics screen in dark mode"><img src="/works/walk-with-me/stats-charts-dark.webp" alt="Time-of-day patterns, monthly match counts and frequent partners derived from the same fictional accepted-match history (dark mode)." width="1170" height="2532" loading="lazy"></a>
+  </div>
+  </div>
+  <figcaption>A little encouragement, and a record of availability and matches.</figcaption>
+</figure>
+```
+
+## A sixth-floor extension
+
+The app is occasionally used, and development has been paused since I started my internships. I did introduce it to my colleagues at Stripe, where it found another application: scheduling our table tennis breaks on the sixth floor. That was a rather enjoyable confirmation that the generalisation had some practical value.
+
+Looking back, the project gave me a first substantial experience of building with coding agents, an appreciation for efficient data models, and quite a few opportunities to discover what “works on my phone” leaves unresolved. It also brought me back to something I have always enjoyed about programming: taking an everyday inconvenience seriously enough to see what I can make of it.
+
+The original challenge concerned whether I could build it in a week. The following three months suggest that I should be more careful about what counts as finished.
