@@ -51,7 +51,7 @@ The backend therefore collects notification candidates per recipient and keeps t
 
 **New match → member joined → friend ready**
 
-Stable stacking keys let later notices replace or group earlier ones. `AsyncLocalStorage` gives each backend invocation its own notification context, so simultaneous readiness events do not accidentally share a queue just because the server handles them in the same process.
+Stable stacking keys let later notices replace or group earlier ones. Node.js's [`AsyncLocalStorage`](https://nodejs.org/api/async_context.html#class-asynclocalstorage) keeps context attached to an asynchronous call chain. Here, that gives each backend invocation its own notification queue, even when the server handles several in the same process.
 
 ## Finding the first possible moment
 
@@ -77,9 +77,9 @@ The first three can start at 18:00. With Nora, the shared window becomes 18:30 t
 
 ### Moving only when something changes
 
-I also considered a **sweep-line algorithm over availability interval endpoints**. Sort the beginnings and endings chronologically, then sweep along the timeline, adding and removing people as their windows open and close. Between successive endpoints, the active set cannot change.
+I also considered a **[sweep-line algorithm](https://algs4.cs.princeton.edu/93intersection/)** over availability interval endpoints. Sort the beginnings and endings chronologically, then sweep along the timeline, adding and removing people as their windows open and close. Between successive endpoints, the active set cannot change.
 
-For this sketch, write a window as $I_u=[s_u,e_u)$ and the distinct endpoints as $t_1<\cdots<t_m$. On the segment $[t_i,t_{i+1})$, the active set is
+For person $u$, write their availability as $I_u=[s_u,e_u)$, with start $s_u$ and end $e_u$. Sorting the $m$ distinct endpoints gives $t_1<\cdots<t_m$. On $[t_i,t_{i+1})$, the active set is
 
 $$
 A_i=\{u\mid s_u\le t_i<e_u\}.
@@ -93,19 +93,19 @@ The half-open intervals simplify this sketch; the app's overlap check includes s
 
 In the default walking group, being friends with me does not automatically mean that two other people are friends with each other.
 
-After candidate filtering, the default walking group uses closed availability windows $I_u=[s_u,e_u]$. Its graph is
+After candidate filtering, let $V$ contain the eligible people. For the default walking group, using windows $I_u=[s_u,e_u]$, the compatibility graph $G=(V,E)$ is
 
 $$
 \begin{aligned}
 G&=(V,E),\\
 \{u,v\}\in E&\iff u\sim v\\
-&\quad\land\;I_u\cap I_v\ne\varnothing.
+&\quad\land\;I_u\cap I_v\ne\varnothing,
 \end{aligned}
 $$
 
 where $u\sim v$ means accepted friendship. A **clique** is a set where every distinct pair has an edge. Fixed activity groups use membership in that group in place of the friendship requirement.
 
-The matcher uses **Bron–Kerbosch with pivoting** to find maximal cliques containing the person whose availability changed: groups to which no further eligible person can be added.
+The matcher uses **[Bron–Kerbosch with pivoting](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.clique.find_cliques.html)** to find maximal cliques containing the person whose availability changed: groups to which no further eligible person can be added.
 
 ```{=html}
 <figure class="article-interactive">
@@ -116,7 +116,7 @@ The matcher uses **Bron–Kerbosch with pivoting** to find maximal cliques conta
 
 ### The pivoted search
 
-The search keeps three sets:
+The search keeps three sets, $R$, $P$ and $X$:
 
 | Set | What it contains |
 | --- | --- |
@@ -152,7 +152,7 @@ for (const v of [...P].filter(n => !pivotNeighbors.has(n))) {
 
 ### From a clique to a concrete time
 
-For each resulting clique, the common window is the interval intersection:
+For a clique $C$, its common window $I_C$ has bounds $s_C$ and $e_C$:
 
 $$
 \begin{aligned}
@@ -172,13 +172,13 @@ Pivoting does not make clique enumeration cheap for arbitrarily large graphs. Th
 
 ### Both sides choose a range
 
-For location-based matching, the app compares each candidate $u$ with the person whose availability changed, $q$, using **Haversine distance**:
+For location-based matching, I use the **[Haversine distance](https://www.movable-type.co.uk/scripts/latlong.html#distance)** $d_H$, a common mapping calculation for latitude/longitude coordinates on a spherical Earth. Writing $p_u$ for person $u$'s position and $r_u$ for their range, each candidate $u$ is compared with the person whose availability changed, $q$:
 
 $$
 d_H(p_q,p_u)\le\min(r_q,r_u).
 $$
 
-Here $p$ is a position and $r$ the person's chosen range. Both sides have to agree to the distance. Someone willing to travel three kilometres should not automatically pull in a friend who only wants to travel one. This filter compares candidates with the triggering person, not every candidate pair.
+Both sides have to agree to the distance. Someone willing to travel three kilometres should not automatically pull in a friend who only wants to travel one. This filter compares candidates with the triggering person, not every candidate pair.
 
 These checks are a practical first filter; they do not calculate walking routes or choose the perfect walk for us.
 
@@ -186,7 +186,7 @@ These checks are a practical first filter; they do not calculate walking routes 
 
 When someone joins, the suggested meeting point should take their position into account. A detail I quite like is that the previous average and member count are enough to update the centre, without fetching every coordinate again.
 
-Treating the coordinates as a two-component vector, the **incremental mean** is
+For $n$ members, let $\bar p_n$ be their average position and $p_{\mathrm{new}}$ the joining person's coordinates. The **incremental mean** update is
 
 $$
 \begin{aligned}
@@ -211,7 +211,9 @@ export function updateAnchorOnJoin(
 }
 ```
 
-It is a running arithmetic average of coordinates, so it suggests a centre, rather than a necessarily suitable place to stand. There might be a building there. We can adjust the proposal ourselves, and the interactive map makes it easier to see what is nearby.
+The previous centre and member count are saved with the group and updated together on a join. This is **incremental computation**: updating an existing result from what changed.
+
+It is still an arithmetic average of coordinates, so it suggests a centre, rather than a necessarily suitable place to stand. There might be a building there. We can adjust the proposal ourselves, and the interactive map makes it easier to see what is nearby.
 
 ### Knowing when the algorithm should stop
 
@@ -219,7 +221,7 @@ The centre should move when someone joins. A café we have deliberately chosen s
 
 Group metadata carries an update source (`auto`, `manual`, or `vote`) and separate override flags for the time, place and category. The matcher can update its own suggestions while preserving decisions we have made ourselves.
 
-A location proposal can also be put to a majority vote in the chat. Counting votes and applying the result happen in one **transaction**, so simultaneous votes do not overwrite one another. The majority is recalculated from the current membership: with four people, two yes votes are still one short. A passed vote marks the place as a human decision. Remembering where a value came from turned out to matter almost as much as calculating it.
+A location proposal can also be put to a majority vote in the chat. Counting votes and applying the result happen in one transaction, so simultaneous votes do not overwrite one another. The majority is recalculated from the current membership: with four people, two yes votes are still one short. A passed vote marks the place as a human decision. Remembering where a value came from turned out to matter almost as much as calculating it.
 
 ```{=html}
 <figure class="article-gallery">
@@ -253,15 +255,15 @@ A location proposal can also be put to a majority vote in the chat. Counting vot
 
 Adding parking and supermarkets sounded like a fairly small favour to our walks. It ended up requiring a coordinated request system of its own. Dragging a map produces overlapping requests; dragging it back should reuse old results, while a late answer for somewhere else should not take over the screen.
 
-The points-of-interest client breaks the map into fixed tiles and shares the machinery across the different categories:
+The **[Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API)** searches OpenStreetMap's location data for these points of interest (POIs). My client breaks the map into fixed tiles and shares the request machinery across categories:
 
 | Mechanism | What it does here |
 | --- | --- |
-| **LRU cache** and IndexedDB | Reuse tiles; LRU evicts the least recently used, rather than simply the oldest |
+| **LRU cache** and IndexedDB | Keep map tiles in memory and persist them across sessions |
 | **Request coalescing** | Share one unfinished request among callers asking for the same tile |
 | **Batching** | Combine different new tiles into one request |
-| **Backpressure** | Send work through a common FIFO gate, with one Overpass request in flight in that browser context |
-| **Generation counter** | Ignore callbacks belonging to an old viewport, even if their request finishes later |
+| **Backpressure** | Gate a FIFO queue to one Overpass request in flight per browser context |
+| **Generation counter** | Give each view a number; ignore results for an older view, even if they arrive later |
 
 Coalescing and batching sound similar, but solve different problems: one avoids doing the same work twice, the other bundles different work. Old queued tiles can be discarded; requests already sent can still finish and warm the cache.
 
@@ -269,9 +271,11 @@ Failures release the queue in a `finally` block, and rate-limit responses pause 
 
 ## An app is also its data model
 
-The frontend uses React and TypeScript, Zustand for state, and Leaflet for maps. Firebase handles authentication, realtime data and backend workflows. Firestore subscriptions keep the screens current. The data model needed considerably more thought than I had allowed for in the one-week bet.
+The React/TypeScript frontend uses Zustand for state and Leaflet for maps, with Firebase behind the shared data and workflows. The data model needed considerably more thought than I had allowed for in the one-week bet.
 
-There are three kinds of data with deliberately different lifetimes:
+Friendships live once, in a document keyed by the sorted pair of user IDs and carrying their request/acceptance state; groups store member IDs. “Flo is friends with Maya” and “Maya is friends with Flo” therefore identify the same relation. Queries fetch the relations and availability relevant to the current user or group.
+
+The activity data has three deliberately different lifetimes:
 
 | Data | Its job | Its lifetime |
 | --- | --- | --- |
@@ -279,17 +283,25 @@ There are three kinds of data with deliberately different lifetimes:
 | Occasion group | Coordinate a particular meeting and its chat | Temporary |
 | Match record | Keep lightweight history for statistics | Lasting |
 
-A gym group can continue to exist indefinitely, while Tuesday's arrangement should eventually disappear from the active screen. The match record can remain without keeping the entire temporary conversation alive.
+A gym group can continue indefinitely, while Tuesday's arrangement should disappear from the active screen. Its match record survives the temporary chat, tracking membership and acceptance as plans change. Readiness history grows through Firestore's [`arrayUnion`](https://firebase.google.com/docs/firestore/manage-data/add-data#update_elements_in_an_array) operation, which adds a timestamp only if that exact value is absent. Repeating a timestamp does not invent another offer.
 
-Temporary groups use a renewable **lease**: meaningful activity pushes their expiry into the future. A separate **TTL** makes old data eligible for deletion. Expiring on screen and physically removing records are deliberately different jobs; we need not wait for a cleanup task to discover that yesterday's invitation is over.
+Temporary groups use a renewable **lease**: meaningful activity pushes their expiry into the future. A separate **time to live (TTL)** makes old data eligible for deletion. Expiring on screen and physically removing records are deliberately different jobs; we need not wait for a cleanup task to discover that yesterday's invitation is over.
 
-Group extensions use transactions, and **canonicalisation** helps recognise duplicate proposals: sort the member IDs, include the activity, and hash that representation. `[Flo, Maya]` and `[Maya, Flo]` then have the same fingerprint. These details matter particularly when several people become available almost simultaneously. “Just add another person” becomes less simple when two backend events try to do it at once.
+Group extensions use transactions, and **canonicalisation** helps recognise duplicate proposals: sort the member IDs, include the activity, and compute a [hash](https://developer.mozilla.org/en-US/docs/Glossary/Hash_function), a fixed-length fingerprint of that representation. These details matter particularly when several people become available almost simultaneously. “Just add another person” becomes less simple when two backend events try to do it at once.
+
+### Getting the walk off my laptop
+
+A group found by the matcher still had to reach my friends' phones. Vite builds the frontend; Firebase Hosting delivers it through a global [content-delivery network (CDN)](https://firebase.google.com/docs/hosting). Firebase Authentication handles accounts, avatar images go into Cloud Storage, and availability, groups and chats into Firestore.
+
+Pressing Ready writes an availability document to Firestore. A [second-generation Cloud Function](https://firebase.google.com/docs/functions/version-comparison) receives that event, runs the matcher, and creates or extends groups. Scoped [`onSnapshot` listeners](https://firebase.google.com/docs/firestore/query-data/listen) load the relevant query results and then follow changes; subscriptions are cleaned up as their context changes. [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging) handles push notifications. The functions run on Node.js 22 as managed Google Cloud Run services. “Serverless” still involves servers; somebody else gets to look after them.
+
+For the **[progressive web app (PWA)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)**—a website installable like an app—[vite-plugin-pwa](https://vite-pwa-org.netlify.app/guide/) generates the app manifest and uses [Workbox](https://developer.chrome.com/docs/workbox) to build a [service worker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). The manifest describes how the installed app appears; the worker is a browser-managed background script that caches frontend assets and handles incoming notifications. The interface can be cached on the phone, while matching still relies on the connection to Firebase.
 
 ### A cancelled offer should stay cancelled
 
 The frontend shows readiness changes before the server confirms them: **optimistic UI**. An older subscription snapshot could then bring my offer back after I press Stop.
 
-Cancelling therefore needs a **tombstone**, a remembered deletion: a pending `null`, keyed by person and activity. It wins over the older snapshot until the server confirms the offer's absence.
+Cancelling therefore needs a local **tombstone**, a remembered deletion: a pending `null`, keyed by person and activity. It wins over the older snapshot until the server confirms the offer's absence.
 
 After collecting the server's offers, this excerpt overlays pending local changes:
 
@@ -307,9 +319,9 @@ A failed write restores the previous pending state. It is slightly counterintuit
 
 ### The privacy questions I left open
 
-I also spent time thinking about end-to-end encryption when people dynamically join a conversation. A new participant changes who should have access to which messages. Another question was whether the app could compare our locations without letting the server read them. Encrypting coordinates is easy to suggest. Calculating with them afterwards is the less convenient part.
+I also spent time thinking about **end-to-end encryption**, where only the participants can read messages, as people dynamically join a conversation. A new participant changes who should have access to which messages. Another question was whether the app could compare our locations without letting the server read them. Encrypting coordinates is easy to suggest. Calculating with them afterwards is the less convenient part.
 
-Two names helped separate the questions. A **zero-knowledge proof** proves a statement about a secret witness without revealing that witness. **Secure multiparty computation** lets several parties calculate something from inputs they keep private. [NIST's overview](https://csrc.nist.gov/Projects/pec/pec-tools) gives a useful introduction to both. For our matcher, I concluded that if each friend knows only their own coordinates, a proof alone does not supply the other private input needed to compare the two locations.
+Two names helped separate the questions. A **zero-knowledge proof** proves a statement about a secret input without revealing that input. **Secure multiparty computation** lets several parties calculate something from inputs they keep private. [NIST's overview](https://csrc.nist.gov/Projects/pec/pec-tools) gives a useful introduction to both. For our matcher, I concluded that if each friend knows only their own coordinates, a proof alone does not supply the other private input needed to compare the two locations.
 
 I considered coarse server-side filtering and exact matching on friends' devices, too. A phone that is offline or whose PWA is sleeping is an awkward place to put an essential part of the scheduler. There is also **metadata leakage**: concealing coordinates helps less if notification recipients reveal who was nearby. These remained design explorations. The current app uses server-readable coordinates and messages.
 
@@ -319,7 +331,11 @@ This project was my introduction to agentic coding, mostly with Claude Code. I d
 
 Repository instructions gradually recorded architectural decisions, shared frontend/backend contracts, data shapes and checks to run. Having the reasoning alongside the code helped stop agents from reopening solved problems or introducing another implementation of logic that already existed.
 
-GitHub Actions handled builds, automated tests and deployments; open pull requests received Firebase Hosting previews. I could try a change on my phone, notice an awkward interaction, and ask the agent to adapt it.
+GitHub Actions runs the app's CI/CD pipeline. On `main`, ESLint and the frontend (Vitest) and backend (Jest) tests precede the build. semantic-release prepares releases; Firebase's Hosting action publishes the frontend and its CLI deploys the functions. Database access rules and query indexes have a separate deployment step.
+
+Deployments use a **service account**, an identity for automation, with credentials kept in [GitHub Secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets). This is separate from the Firebase Authentication accounts used by my friends.
+
+Pull requests build and receive [Firebase Hosting previews](https://firebase.google.com/docs/hosting/test-preview-deploy). Each preview has its own frontend URL and shares the configured backend. I could try a change on my phone, notice an awkward interaction, and ask the agent to adapt it.
 
 ```{=html}
 <figure class="article-diagram">
@@ -366,7 +382,9 @@ A readiness streak measures how consistently someone offered to join, which is u
 
 Playing with streaks was fun, particularly when it motivated some friends to become ready for a walk a little more often. I had accidentally given our walking habit a small competitive element.
 
-There is also “streak on ice”: accepted matches with a partner earn a little protection for missed readiness days. The ice balance is **derived state**: the app replays readiness and accepted-match history chronologically, with at most three ice available per group. Frontend and backend share the derivation function. It is easier for the calendar and public stats to agree when both literally use the same definition, rather than maintaining another counter in several places.
+There is also “streak on ice”: accepted matches with a partner earn protection for missed readiness days. The balance is **derived state**, calculated from readiness and accepted-match history in chronological order, with at most three ice available per group. Frontend and backend share that calculation.
+
+The backend saves small score and streak summaries alongside profiles: **denormalisation**, keeping derived copies where they are useful to read. A leaderboard can use those summaries without reconstructing everybody's history; refreshing them still requires the history. Readiness history stays owner-readable, while the public profile subset is available to other signed-in users.
 
 ```{=html}
 <figure class="article-gallery">
