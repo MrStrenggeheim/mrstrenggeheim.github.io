@@ -1,0 +1,5 @@
+flowchart TB
+    Checks["Lint<br>Frontend tests<br>Functions tests"] --> Build["Build"]
+    Build --> Release["semantic-release"] --> Production["Deploy Production"]
+    class Checks,Release,Production main
+    class Build both

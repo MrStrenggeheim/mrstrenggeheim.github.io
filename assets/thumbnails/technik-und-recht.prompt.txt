@@ -1,0 +1,8 @@
+Generated using the built-in image_gen tool.
+
+Use case: stylized-concept
+Asset type: wide editorial cover for the German article 'Technik & Recht', a university study guide about civil and criminal responsibility, product liability, data protection and autonomous driving/robotics. Generate a finished landscape raster image, approximately 1600 x 1000, suitable as a gallery thumbnail and article banner.
+Primary request: a sophisticated tactile miniature still life connecting engineering and law. A precise industrial robotic arm in charcoal metal with subtle warm orange joints reaches over a neat dark circuit board towards a thick ivory law book. A single brushed-metal paragraph symbol § stands upright on the book, visually clear and correctly formed. Fine circuit paths link the technical and legal objects into one restrained composition.
+Style/medium: high-quality editorial 3D illustration, physical materials, matte metal and paper texture, crisp silhouette, beautiful soft shadows, not a generic AI cyberpunk image. Background warm light grey with gentle tonal depth; charcoal, ivory, muted orange accents matching a minimal personal website. Thoughtful, calm and slightly playful.
+Composition: landscape 8:5. Keep the main robot, law book and paragraph symbol in the central upper two thirds; enough quiet space along the lower quarter for the site's title overlay. Recognizable objects at small thumbnail size, carefully lit, no tiny decorative clutter.
+Constraints: no people, no judge's gavel, no scales, no flags, no brand logos, no lettering or words other than the single § symbol, no watermark. No embedded article title.

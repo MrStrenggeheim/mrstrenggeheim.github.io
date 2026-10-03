@@ -8,13 +8,15 @@
   <link rel="stylesheet" href="/css/article-demo.css">
   <style>
     :root { --clique-hit-width: 22; --clique-graph-width: 380px; }
-    .example { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); align-items: center; margin-top: var(--space-sm); }
+    .example { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-md); align-items: center; margin-top: var(--space-sm); }
     #graph { width: 100%; max-width: var(--clique-graph-width); display: block; margin: auto; overflow: visible; }
     .connection { cursor: pointer; }
     .line { stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 6 7; }
     .connection[aria-pressed="true"] .line { stroke: var(--demo-green); stroke-width: 3; stroke-dasharray: none; }
     .hit { stroke: transparent; stroke-width: var(--clique-hit-width); }
-    .connection:hover .line { stroke: var(--demo-green); stroke-width: 5; }
+    @media (hover: hover) and (pointer: fine) {
+      .connection:hover .line { stroke: var(--demo-green); stroke-width: 5; }
+    }
     .connection:focus { outline: none; }
     .connection.is-highlighted .line { stroke: var(--accent); stroke-width: 5; }
     .node.is-highlighted { stroke: var(--accent); stroke-width: 3; }
@@ -26,7 +28,15 @@
     .groups button { width: 100%; justify-content: flex-start; text-align: left; }
     .summary p { font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-sm); }
     .presets { display: flex; flex-wrap: wrap; gap: var(--control-gap); margin-top: var(--space-md); }
-    @media (max-width: 480px) { .example { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) {
+      :root { --clique-hit-width: 28; }
+      .example { grid-template-columns: minmax(0, 1fr); }
+      .presets .demo-button { flex: 1 1 auto; }
+    }
+    @media (max-width: 360px) {
+      .names { font-size: 22px; }
+      .presets .demo-button { flex-basis: 100%; }
+    }
   </style>
 </head>
 <body>

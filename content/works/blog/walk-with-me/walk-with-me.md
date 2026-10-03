@@ -1,7 +1,7 @@
 ---
 title: "Walk With Me"
 subtitle: "A one-week bet, three months of procrastination, and a scheduling app."
-type: project
+type: blog
 date: 2026-10-02
 author: Florian Hunecke
 tags: [Web Development, Algorithms, Agentic Coding, Firebase, PWA, Visualization]
@@ -26,20 +26,22 @@ In Walk With Me, we specify when we are available and where we would start. The 
 
 The aim was to remove the recurring bookkeeping: checking who is still available and repeating the current plan. There is still a chat, attached to a particular occasion rather than accumulating every failed attempt to organise a walk since the beginning of the pandemic. Notification settings and distance filters help keep the remaining chatter useful.
 
+We get ready inside fixed **activity groups**. Matching then creates temporary **meeting groups** for individual occasions, where we coordinate the exact time and place. The matched group expires, while its record stays for statistics.
+
 ```{=html}
 <link rel="stylesheet" href="/works/walk-with-me/phone-screens.css">
 <figure class="article-gallery">
   <div class="article-gallery__grid">
   <div class="wwm-phone">
-    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/home-light.webp" aria-label="Open the full home screen in light mode"><img src="/works/walk-with-me/home-light.webp" alt="The app home screen with the branded walking icon, fictional friends with avatars, their availability, and a weather forecast (light mode)." width="1170" height="2532" loading="lazy"></a>
-    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/home-dark.webp" aria-label="Open the full home screen in dark mode"><img src="/works/walk-with-me/home-dark.webp" alt="The app home screen with the branded walking icon, fictional friends with avatars, their availability, and a weather forecast (dark mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/home-rain-light.webp" aria-label="Open the home screen in light mode"><img src="/works/walk-with-me/home-rain-light.webp" alt="The home screen with the same activity groups, friends’ availability and proposed walk, with rain arriving later in the forecast (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/home-rain-dark.webp" aria-label="Open the home screen in dark mode"><img src="/works/walk-with-me/home-rain-dark.webp" alt="The home screen with the same activity groups, friends’ availability and proposed walk, with rain arriving later in the forecast (dark mode)." width="1170" height="2532" loading="lazy"></a>
   </div>
   <div class="wwm-phone">
-    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/group-vote-light.webp" aria-label="Open the full chat screen in light mode"><img src="/works/walk-with-me/group-vote-light.webp" alt="The matched group chat with a location proposal, partial voting and a reply to a friend’s message (light mode)." width="1170" height="2532" loading="lazy"></a>
-    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/group-vote-dark.webp" aria-label="Open the full chat screen in dark mode"><img src="/works/walk-with-me/group-vote-dark.webp" alt="The matched group chat with a location proposal, partial voting and a reply to a friend’s message (dark mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/context-detail-light.webp" aria-label="Open Maya’s map popup in light mode"><img src="/works/walk-with-me/context-detail-light.webp" alt="Maya’s availability, starting point and comment open above her map avatar (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/context-detail-dark.webp" aria-label="Open Maya’s map popup in dark mode"><img src="/works/walk-with-me/context-detail-dark.webp" alt="Maya’s availability, starting point and comment open above her map avatar (dark mode)." width="1170" height="2532" loading="lazy"></a>
   </div>
   </div>
-  <figcaption>A walk at 18:30, with four people already on board. The meeting point is still up for a vote; snacks are already being discussed.</figcaption>
+  <figcaption>When we are free, where we would start, and, in Maya’s case, whether there will be snacks.</figcaption>
 </figure>
 ```
 
@@ -55,16 +57,28 @@ Stable stacking keys let later notices replace or group earlier ones. Node.js's 
 
 ## Finding the first possible moment
 
-The time calculation is pleasantly small: take the latest beginning and the earliest ending of everyone's availability. If the beginning is no later than the ending, we have a shared window and its earliest possible start.
-
-For example:
-
-| Friend | Available from | Available until |
-| --- | --- | --- |
-| Flo | 17:15 | 19:00 |
-| Maya | 17:45 | 19:30 |
-| Leo | 18:00 | 18:45 |
-| Nora, joining later | 18:30 | 20:00 |
+```{=html}
+<div class="wwm-schedule-note">
+  <div class="wwm-schedule-copy">
+    <p>The time calculation is pleasantly small: take the latest beginning and the earliest ending of everyone's availability.</p>
+    <p>The scheduling dialog gives “Back for dinner” an actual end time.</p>
+    <p>For example:</p>
+    <table>
+      <thead><tr><th scope="col">Friend</th><th scope="col">Available from</th><th scope="col">Available until</th></tr></thead>
+      <tbody>
+        <tr><td>Flo</td><td>17:15</td><td>19:00</td></tr>
+        <tr><td>Maya</td><td>17:45</td><td>19:30</td></tr>
+        <tr><td>Leo</td><td>18:00</td><td>18:45</td></tr>
+        <tr><td>Nora, joining later</td><td>18:30</td><td>20:00</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="wwm-inline-detail">
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/schedule-detail-light.webp" aria-label="Preview the scheduling dialog in light mode"><img src="/works/walk-with-me/schedule-detail-light.webp" alt="Scheduling an offer from 18:00 to 19:30 at Universität München, with a 3 km matching radius and the comment Back for dinner." width="1074" height="1632" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/schedule-detail-dark.webp" aria-label="Preview the scheduling dialog in dark mode"><img src="/works/walk-with-me/schedule-detail-dark.webp" alt="Scheduling an offer from 18:00 to 19:30 at Universität München, with a 3 km matching radius and the comment Back for dinner." width="1074" height="1632" loading="lazy"></a>
+  </div>
+</div>
+```
 
 The first three can start at 18:00. With Nora, the shared window becomes 18:30 to 18:45. The maths is easy enough; whether fifteen minutes is an appealing walk remains a human decision.
 
@@ -132,6 +146,7 @@ Choosing proposals that share no people would be another problem: **[set packing
 
 The pivot is the useful trick. Instead of branching on every remaining candidate, the search branches only on candidates outside the pivot's neighbourhood. Any maximal clique extending the current group must contain the pivot or someone not connected to it; otherwise the pivot could still be added.
 
+<!--
 This inner loop is a cornerstone of the app's matcher:
 
 ```typescript
@@ -149,6 +164,7 @@ for (const v of [...P].filter(n => !pivotNeighbors.has(n))) {
     X.add(v);
 }
 ```
+-->
 
 ### From a clique to a concrete time
 
@@ -162,15 +178,17 @@ I_C&=[s_C,e_C]\quad\text{if }s_C\le e_C.
 \end{aligned}
 $$
 
-If $s_C>e_C$, there is no common window. Equality gives only a shared instant—mathematically an overlap, but not much of a walk.
+If $s_C>e_C$, there is no common window. Equality gives only a shared instant. Mathematically, an overlap, but not much of a walk.
 
 This is the **[Helly property for intervals](https://www.math.utah.edu/~treiberg/HellySlides.pdf)**: pairwise overlap in a finite collection of continuous intervals guarantees a common point. The person who starts latest and the one who finishes earliest must overlap too. Their boundaries therefore give a window shared by everyone.
 
-I quite like that an ordinary interface choice—one continuous availability window per person—gives the matcher this guarantee. With several separate slots, every pair might find a time without there being one for all three. The implementation uses the common beginning for its automatic starting-time proposal.
+I quite like that an ordinary interface choice of one continuous availability window per person gives the matcher this guarantee. With several separate slots, every pair might find a time without there being one for all three. The implementation uses the common beginning for its automatic starting-time proposal.
 
 Pivoting does not make clique enumeration cheap for arbitrarily large graphs. The app prioritises nearby candidates and caps the matching candidate set at twenty. For our use case, a bounded search was considerably more useful than an impressive algorithm left to run without limits.
 
 ### Both sides choose a range
+
+For map activities, I kept two personal defaults: a **matching radius** for whom I am willing to meet, and a **notification/filter radius** for nearby offers I want to see. The home availability widget applies the filter around my saved default location; custom map groups use it for readiness notifications too. The defaults can differ between activities, and an individual offer can override its matching radius. I can keep an eye on a wider area without offering to walk all of it.
 
 For location-based matching, I use the **[Haversine distance](https://www.movable-type.co.uk/scripts/latlong.html#distance)** $d_H$, a common mapping calculation for latitude/longitude coordinates on a spherical Earth. Writing $p_u$ for person $u$'s position and $r_u$ for their range, each candidate $u$ is compared with the person whose availability changed, $q$:
 
@@ -225,31 +243,20 @@ A location proposal can also be put to a majority vote in the chat. Counting vot
 
 ```{=html}
 <figure class="article-gallery">
-  <div class="article-gallery__grid article-gallery__grid--single">
+  <div class="article-gallery__grid">
   <div class="wwm-phone">
-    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/group-vote-light.webp" aria-label="Open the full location vote screen in light mode"><img src="/works/walk-with-me/group-vote-light.webp" alt="A location proposal in the four-person chat, showing two yes votes while three are required for a majority (light mode)." width="1170" height="2532" loading="lazy"></a>
-    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/group-vote-dark.webp" aria-label="Open the full location vote screen in dark mode"><img src="/works/walk-with-me/group-vote-dark.webp" alt="A location proposal in the four-person chat, showing two yes votes while three are required for a majority (dark mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/group-vote-light.webp" aria-label="Open the location vote in light mode"><img src="/works/walk-with-me/group-vote-light.webp" alt="The temporary meeting group’s chat with two yes votes for a location proposal and three required for a majority (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/group-vote-dark.webp" aria-label="Open the location vote in dark mode"><img src="/works/walk-with-me/group-vote-dark.webp" alt="The temporary meeting group’s chat with two yes votes for a location proposal and three required for a majority (dark mode)." width="1170" height="2532" loading="lazy"></a>
+  </div>
+  <div class="wwm-phone">
+    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/context-snacks-selected-light.webp" aria-label="Open the selected snack stop in light mode"><img src="/works/walk-with-me/context-snacks-selected-light.webp" alt="A compact Edeka Haxhijaj card with opening hours and accessibility information, above the map with friends and other snack stops still visible (light mode)." width="1170" height="2532" loading="lazy"></a>
+    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/context-snacks-selected-dark.webp" aria-label="Open the selected snack stop in dark mode"><img src="/works/walk-with-me/context-snacks-selected-dark.webp" alt="A compact Edeka Haxhijaj card with opening hours and accessibility information, above the map with friends and other snack stops still visible (dark mode)." width="1170" height="2532" loading="lazy"></a>
   </div>
   </div>
-  <figcaption>Two yes votes, one still needed. The location proposal lives in the conversation it belongs to, and a passed vote becomes a decision the automatic matcher preserves.</figcaption>
+  <figcaption>Two yes votes, one still needed. The map also helps with the equally pressing question of where to buy snacks and whether the shop is still open.</figcaption>
 </figure>
 ```
 
-```{=html}
-<figure class="article-gallery">
-  <div class="article-gallery__grid">
-  <div class="wwm-phone">
-    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/context-detail-light.webp" aria-label="Open Maya’s map popup in light mode"><img src="/works/walk-with-me/context-detail-light.webp" alt="Walk With Me context with Maya’s avatar, location and availability popup open above her map marker (light mode)." width="1170" height="2532" loading="lazy"></a>
-    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/context-detail-dark.webp" aria-label="Open Maya’s map popup in dark mode"><img src="/works/walk-with-me/context-detail-dark.webp" alt="Walk With Me context with Maya’s avatar, location and availability popup open above her map marker (dark mode)." width="1170" height="2532" loading="lazy"></a>
-  </div>
-  <div class="wwm-phone">
-    <a class="wwm-screen wwm-screen-light" href="/works/walk-with-me/context-snacks-light.webp" aria-label="Open the snack POI map in light mode"><img src="/works/walk-with-me/context-snacks-light.webp" alt="The same Walk With Me context with snack and food points of interest activated around the friends’ meeting area (light mode)." width="1170" height="2532" loading="lazy"></a>
-    <a class="wwm-screen wwm-screen-dark" href="/works/walk-with-me/context-snacks-dark.webp" aria-label="Open the snack POI map in dark mode"><img src="/works/walk-with-me/context-snacks-dark.webp" alt="The same Walk With Me context with snack and food points of interest activated around the friends’ meeting area (dark mode)." width="1170" height="2532" loading="lazy"></a>
-  </div>
-  </div>
-  <figcaption>Maya’s current offer on the left; nearby snack and food stops on the right. Finding a time is only part of the arrangement.</figcaption>
-</figure>
-```
 
 ### A small scheduling system for snacks
 
@@ -279,8 +286,8 @@ The activity data has three deliberately different lifetimes:
 
 | Data | Its job | Its lifetime |
 | --- | --- | --- |
-| Activity group | Define the people, activity and matching mode | Ongoing |
-| Occasion group | Coordinate a particular meeting and its chat | Temporary |
+| Fixed activity group | Define the people, activity and matching mode | Ongoing |
+| Temporary meeting group | Coordinate a particular meeting and its chat | Temporary |
 | Match record | Keep lightweight history for statistics | Lasting |
 
 A gym group can continue indefinitely, while Tuesday's arrangement should disappear from the active screen. Its match record survives the temporary chat, tracking membership and acceptance as plans change. Readiness history grows through Firestore's [`arrayUnion`](https://firebase.google.com/docs/firestore/manage-data/add-data#update_elements_in_an_array) operation, which adds a timestamp only if that exact value is absent. Repeating a timestamp does not invent another offer.
@@ -295,7 +302,7 @@ A group found by the matcher still had to reach my friends' phones. Vite builds 
 
 Pressing Ready writes an availability document to Firestore. A [second-generation Cloud Function](https://firebase.google.com/docs/functions/version-comparison) receives that event, runs the matcher, and creates or extends groups. Scoped [`onSnapshot` listeners](https://firebase.google.com/docs/firestore/query-data/listen) load the relevant query results and then follow changes; subscriptions are cleaned up as their context changes. [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging) handles push notifications. The functions run on Node.js 22 as managed Google Cloud Run services. “Serverless” still involves servers; somebody else gets to look after them.
 
-For the **[progressive web app (PWA)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)**—a website installable like an app—[vite-plugin-pwa](https://vite-pwa-org.netlify.app/guide/) generates the app manifest and uses [Workbox](https://developer.chrome.com/docs/workbox) to build a [service worker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). The manifest describes how the installed app appears; the worker is a browser-managed background script that caches frontend assets and handles incoming notifications. The interface can be cached on the phone, while matching still relies on the connection to Firebase.
+For the **[progressive web app (PWA)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)**, a website installable like an app, [vite-plugin-pwa](https://vite-pwa-org.netlify.app/guide/) generates the app manifest and uses [Workbox](https://developer.chrome.com/docs/workbox) to build a [service worker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). The manifest describes how the installed app appears; the worker is a browser-managed background script that caches frontend assets and handles incoming notifications. The interface can be cached on the phone, while matching still relies on the connection to Firebase.
 
 ### A cancelled offer should stay cancelled
 
@@ -325,55 +332,6 @@ Two names helped separate the questions. A **zero-knowledge proof** proves a sta
 
 I considered coarse server-side filtering and exact matching on friends' devices, too. A phone that is offline or whose PWA is sleeping is an awkward place to put an essential part of the scheduler. There is also **metadata leakage**: concealing coordinates helps less if notification recipients reveal who was nearby. These remained design explorations. The current app uses server-readable coordinates and messages.
 
-## Learning to work with agents
-
-This project was my introduction to agentic coding, mostly with Claude Code. I did the whole thing on the $20 plan, which added another constraint to an already somewhat optimistic schedule. I had to learn how to give an agent enough context to make progress without spending the next session explaining the same decisions again.
-
-Repository instructions gradually recorded architectural decisions, shared frontend/backend contracts, data shapes and checks to run. Having the reasoning alongside the code helped stop agents from reopening solved problems or introducing another implementation of logic that already existed.
-
-GitHub Actions runs the app's CI/CD pipeline. On `main`, ESLint and the frontend (Vitest) and backend (Jest) tests precede the build. semantic-release prepares releases; Firebase's Hosting action publishes the frontend and its CLI deploys the functions. Database access rules and query indexes have a separate deployment step.
-
-Deployments use a **service account**, an identity for automation, with credentials kept in [GitHub Secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets). This is separate from the Firebase Authentication accounts used by my friends.
-
-Pull requests build and receive [Firebase Hosting previews](https://firebase.google.com/docs/hosting/test-preview-deploy). Each preview has its own frontend URL and shares the configured backend. I could try a change on my phone, notice an awkward interaction, and ask the agent to adapt it.
-
-```{=html}
-<figure class="article-diagram">
-  <div class="article-flow" role="group" aria-label="The development feedback loop">
-    <div class="article-flow__step"><span>01 / Describe</span><strong class="article-card__title">A change to try</strong><p>Explain the problem and preserve earlier decisions.</p></div>
-    <div class="article-flow__step"><span>02 / Develop</span><strong class="article-card__title">Work with the agent</strong><p>Implement, review, and open a pull request.</p></div>
-    <div class="article-flow__step"><span>03 / Build</span><strong class="article-card__title">A hosting preview</strong><p>GitHub Actions builds a version with its own preview link.</p></div>
-    <div class="article-flow__step"><span>04 / Try</span><strong class="article-card__title">Open it on my phone</strong><p>Check the actual interaction, spacing and feel.</p></div>
-    <div class="article-flow__step"><span>05 / Observe</span><strong class="article-card__title">Feed back what I find</strong><p>Give the agent concrete changes for the next iteration.</p></div>
-    <div class="article-flow__step"><span>06 / Repeat</span><strong class="article-card__title">Keep the useful parts</strong><p>Return to the change with the new observations.</p></div>
-  </div>
-  <figcaption>The phone-preview loop became part of development: make a change, try it on my phone, and feed the observations back to the agent.</figcaption>
-</figure>
-```
-
-### The phones, and then the people
-
-The most difficult practical issue was getting the experience to work across our different iOS and Android devices. Without an Apple developer account, I settled on a progressive web app. It could be added to the home screen and gave us a working proof of concept, while leaving some platform-dependent limitations.
-
-Then came the other deployment problem: convincing the whole friend group to use it. The experience had to be at least as convenient as sending a message to the group everyone already had. A clever matching algorithm alone was unlikely to win that argument. The cleaner conversations, maps, useful extras and history made the case much more convincing.
-
-## Walks, gym sessions, gaming evenings
-
-Somewhere along the way, I realised that the recurring element was the activity itself. The time could change on every occasion. Walking was one example; gym visits and gaming evenings had much the same coordination problem.
-
-This led to three matching modes. Location matters for a walk. For a gaming group, the relevant choice might be which game everyone wants to play. If we always meet at the same gym, time can be the only changing parameter. Permanent groups define that context, and each new availability window produces another opportunity to get together.
-
-```{=html}
-<figure class="article-diagram">
-  <div class="article-modes" role="group" aria-label="Three matching modes">
-    <div class="article-mode"><span>01 / Location</span><strong class="article-card__title">A walk nearby</strong><p>Overlapping time and compatible location ranges.</p></div>
-    <div class="article-mode"><span>02 / Topic</span><strong class="article-card__title">A game together</strong><p>Overlapping time and a compatible game choice.</p></div>
-    <div class="article-mode"><span>03 / Time</span><strong class="article-card__title">The same gym or table</strong><p>A fixed group and activity. Only availability changes.</p></div>
-  </div>
-  <figcaption>The same availability model, with a different question about compatibility.</figcaption>
-</figure>
-```
-
 ### Statistics, and a little competition
 
 I also enjoyed adding statistics and the usual small pieces of gamification: streaks, scores and leaderboards. There are calendars, frequent partners, monthly match counts, geographic history and time-of-day patterns.
@@ -399,6 +357,50 @@ The backend saves small score and streak summaries alongside profiles: **denorma
   </div>
   </div>
   <figcaption>A little encouragement, and a record of availability and matches.</figcaption>
+</figure>
+```
+
+## Learning to work with agents
+
+This project was my introduction to agentic coding, mostly with Claude Code. I did the whole thing on the $20 plan, which added another constraint to an already somewhat optimistic schedule. I had to learn how to give an agent enough context to make progress without spending the next session explaining the same decisions again.
+
+Repository instructions gradually recorded architectural decisions, shared frontend/backend contracts, data shapes and checks to run. Having the reasoning alongside the code helped stop agents from reopening solved problems or introducing another implementation of logic that already existed.
+
+### From a pull request to my phone
+
+GitHub Actions builds the app and saves the compiled frontend as a **build artifact**, which deployment can reuse. Pull requests receive numbered [Firebase Hosting previews](https://firebase.google.com/docs/hosting/test-preview-deploy); newer commits cancel older runs, helping the link keep up with my corrections. The previews have separate frontend URLs, but deploy functions to the shared backend. I could try a change on my phone and ask the agent to adapt it.
+
+On `main`, ESLint, Vitest and Jest come first. [semantic-release](https://semantic-release.gitbook.io/semantic-release/) reads the commit messages, chooses a [semantic version](https://semver.org/), and prepares the changelog and GitHub release. A new version triggers a fresh frontend build because Vite embeds it in the app and icon URLs; otherwise deployment reuses the saved artifact. Firebase’s Hosting action publishes it, while the CLI rebuilds and deploys the functions. Rules and indexes are deployed separately.
+
+Deployments use a **service account**, an identity for automation, with credentials kept in [GitHub Secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets). This is separate from the Firebase Authentication accounts used by my friends.
+
+```{=html}
+<figure class="article-interactive wwm-ci-diagram">
+  <iframe src="/works/walk-with-me/ci-cd-demo.html" title="Interactive CI/CD pipeline: switch between a pull request and main to follow the active jobs and the phone feedback loop" width="800" height="680" loading="lazy"></iframe>
+  <figcaption>A pull request gets a link for my phone. A release gets a version—and sometimes another build. The useful part is the loop in between.</figcaption>
+</figure>
+```
+
+### The phones, and then the people
+
+The most difficult practical issue was getting the experience to work across our different iOS and Android devices. Without an Apple developer account, I settled on a progressive web app. It could be added to the home screen and gave us a working proof of concept, while leaving some platform-dependent limitations.
+
+Then came the other deployment problem: convincing the whole friend group to use it. The experience had to be at least as convenient as sending a message to the group everyone already had. A clever matching algorithm alone was unlikely to win that argument. The cleaner conversations, maps, useful extras and history made the case much more convincing.
+
+## Walks, gym sessions, gaming evenings
+
+Somewhere along the way, I realised that the recurring element was the activity itself. The time could change on every occasion. Walking was one example; gym visits and gaming evenings had much the same coordination problem.
+
+This led to three matching modes. Location matters for a walk. For a gaming group, the relevant choice might be which game everyone wants to play. If we always meet at the same gym, time can be the only changing parameter. Permanent groups define that context, and each new availability window produces another opportunity to get together.
+
+```{=html}
+<figure class="article-diagram">
+  <div class="article-modes" role="group" aria-label="Three matching modes">
+    <div class="article-mode"><span>01 / Location</span><strong class="article-card__title">A walk nearby</strong><p>Overlapping time and compatible location ranges.</p></div>
+    <div class="article-mode"><span>02 / Topic</span><strong class="article-card__title">A game together</strong><p>Overlapping time and a compatible game choice.</p></div>
+    <div class="article-mode"><span>03 / Time</span><strong class="article-card__title">The same gym or table</strong><p>A fixed group and activity. Only availability changes.</p></div>
+  </div>
+  <figcaption>The same availability model, with a different question about compatibility.</figcaption>
 </figure>
 ```
 

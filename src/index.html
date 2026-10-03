@@ -9,12 +9,12 @@
     <script src="/js/landing.js" defer></script>
 </head>
 
-<body>
+<body class="landing-page">
     {header}
 
-    <!-- Main Content - Two State Scroll -->
+    <!-- Desktop reveal; two native scroll-snap sections on mobile -->
     <main class="main landing-wrapper">
-        <!-- Hero Section - State 1: 100vh, State 2: 50vh -->
+        <!-- Hero Section -->
         <section class="hero">
             <div class="hero__content">
                 <h1 class="hero__name">Florian Hunecke</h1>
@@ -35,11 +35,11 @@
                 {socials_lg}
             </div>
 
-            <div class="scroll-indicator">
+            <button class="scroll-indicator" type="button" aria-label="Scroll to About me">
                 <svg>
                     <use href="/assets/icons.svg#icon-arrow-down"></use>
                 </svg>
-            </div>
+            </button>
         </section>
 
         <!-- Bio Section - Appears in State 2 -->

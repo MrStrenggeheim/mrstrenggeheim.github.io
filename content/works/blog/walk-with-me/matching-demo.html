@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/css/article-demo.css">
   <style>
     .chart { margin: var(--space-md) 0; }
-    .row { display: grid; grid-template-columns: var(--demo-name-width) 1fr; align-items: center; height: var(--demo-row-height); gap: var(--space-sm); }
+    .row { display: grid; grid-template-columns: var(--demo-name-width) minmax(0, 1fr); align-items: center; height: var(--demo-row-height); gap: var(--space-sm); }
     .name { font-size: var(--font-size-sm); color: var(--text-primary); }
     .person { display: flex; align-items: center; gap: var(--space-sm); min-height: var(--control-height); cursor: pointer; }
     .person input { width: var(--space-md); height: var(--space-md); margin: 0; accent-color: var(--demo-green); cursor: pointer; }
@@ -20,10 +20,13 @@
     .edge::after { content: attr(data-time); position: absolute; bottom: calc(100% + var(--space-xs)); left: 50%; transform: translateX(-50%); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-control); background: var(--text-primary); color: var(--bg-primary); font: var(--font-size-xs) var(--font-mono); white-space: nowrap; opacity: 0; pointer-events: none; }
     .edge[data-edge="start"] { left: 0; }
     .edge[data-edge="end"] { left: 100%; }
-    .edge:hover, .edge:focus, .edge.is-dragging { color: var(--bg-primary); outline: none; z-index: 2; }
-    .edge:hover::before, .edge:focus::before, .edge.is-dragging::before { background: var(--demo-green); }
-    .edge:focus-visible::before { outline: none; outline-offset: var(--space-xs); }
-    .edge:hover::after, .edge:focus::after, .edge.is-dragging::after { opacity: 1; }
+    .edge { outline: none; }
+    .edge.is-dragging { z-index: 2; }
+    .edge.is-dragging::after { opacity: 1; }
+    @media (hover: hover) and (pointer: fine) {
+      .edge:hover, .edge:focus { z-index: 2; }
+      .edge:hover::after, .edge:focus::after { opacity: 1; }
+    }
     .row.disabled .track, .row.disabled .name span { opacity: .35; }
     .row.disabled .edge { visibility: hidden; }
     .overlap .bar { background: var(--demo-green); }
@@ -34,6 +37,12 @@
     .result .limits { font-size: var(--font-size-xs); }
     .result p { font-size: var(--font-size-sm); color: var(--text-secondary); }
     .result[data-valid="false"] strong { color: var(--accent); }
+    @media (max-width: 360px) {
+      .person { gap: var(--space-xs); }
+      .overlap .name { padding-left: calc(var(--space-md) + var(--space-xs)); }
+      .ticks { font-size: calc(var(--font-size-xs) - 1px); }
+      .result strong { font-size: var(--font-size-base); }
+    }
   </style>
 </head>
 <body>

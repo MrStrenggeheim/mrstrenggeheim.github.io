@@ -1,9 +1,10 @@
 ---
 title: Technik & Recht
-subtitle: "A practical introduction to denoising diffusion probabilistic models and their application in medical imaging."
+subtitle: "Studiennotizen zu Haftung, Datenschutz und autonomen Systemen."
 type: blog
+lang: de
 tags: [IT]
-thumbnail: /assets/thumbnails/placeholder.png
+thumbnail: /assets/thumbnails/technik-und-recht.webp
 author: Florian Hunecke
 date: 2021-08-02
 ---

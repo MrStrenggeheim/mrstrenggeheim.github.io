@@ -1,0 +1,60 @@
+/* Paired captures of the same real app state, framed as phone screens. */
+.wwm-phone {
+  display: block;
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  margin-inline: auto;
+  padding: 6px;
+  border: 1px solid #41464d;
+  border-radius: 30px;
+  background: #171a1f;
+  box-shadow: 0 14px 30px rgb(0 0 0 / 14%);
+  box-sizing: border-box;
+}
+.wwm-phone .wwm-screen {
+  display: block;
+  overflow: hidden;
+  border-radius: 23px;
+  line-height: 0;
+}
+.wwm-phone .wwm-screen img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  aspect-ratio: 390 / 844;
+}
+@media (max-width: 480px) {
+  .wwm-phone { max-width: 250px; }
+}
+.article-gallery__grid--single { grid-template-columns: 1fr; }
+
+/* The dialog detail spans the explanation and its availability table. */
+.wwm-schedule-note {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-block: var(--space-md);
+}
+.wwm-schedule-copy table { margin-bottom: 0; }
+.wwm-inline-detail .wwm-screen { display: block; line-height: 0; }
+.article__content .wwm-inline-detail img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  border: 0;
+  border-radius: var(--space-md);
+}
+@media (max-width: 600px) {
+  .wwm-schedule-note { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
+  .wwm-inline-detail { width: min(100%, 250px); margin-inline: auto; }
+}
+
+:is(.wwm-phone, .wwm-inline-detail) .wwm-screen-dark { display: none; }
+[data-theme="dark"] :is(.wwm-phone, .wwm-inline-detail) .wwm-screen-dark { display: block; }
+[data-theme="dark"] :is(.wwm-phone, .wwm-inline-detail) .wwm-screen-light { display: none; }

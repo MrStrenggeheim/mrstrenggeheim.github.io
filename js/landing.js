@@ -1,5 +1,5 @@
 /**
- * Landing Page - Two-state scroll behavior
+ * Landing Page - Desktop reveal and native mobile scroll snapping
  * State 1: 100vh hero (full)
  * State 2: 50vh hero + bio
  */
@@ -7,9 +7,12 @@
 (function () {
     const landingWrapper = document.querySelector('.landing-wrapper');
     const hero = document.querySelector('.hero');
+    const bio = document.querySelector('.bio');
+    const mobile = window.matchMedia('(max-width: 768px)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const scrollIndicator = document.querySelector('.scroll-indicator');
 
-    if (!landingWrapper || !hero) return;
+    if (!landingWrapper || !hero || !bio) return;
 
     // State tracking
     let isScrolled = false;
@@ -19,6 +22,10 @@
     const SCROLL_THRESHOLD = 100;
 
     function goToState2() {
+        if (mobile.matches) {
+            bio.scrollIntoView({ block: 'start', behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+            return;
+        }
         if (isScrolled || isAnimating) return;
         isAnimating = true;
         isScrolled = true;
@@ -32,6 +39,10 @@
     }
 
     function goToState1() {
+        if (mobile.matches) {
+            landingWrapper.scrollTo({ top: 0, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+            return;
+        }
         if (!isScrolled || isAnimating) return;
         isAnimating = true;
         isScrolled = false;
@@ -49,6 +60,7 @@
 
     // Handle wheel events for state switching
     landingWrapper.addEventListener('wheel', (e) => {
+        if (mobile.matches) return;
         if (isAnimating) {
             e.preventDefault();
             return;
@@ -69,10 +81,12 @@
     // Handle touch events for mobile
     let touchStartY = 0;
     landingWrapper.addEventListener('touchstart', (e) => {
+        if (mobile.matches) return;
         touchStartY = e.touches[0].clientY;
     }, { passive: true });
 
     landingWrapper.addEventListener('touchmove', (e) => {
+        if (mobile.matches) return;
         if (isAnimating) return;
 
         const touchY = e.touches[0].clientY;
@@ -88,6 +102,20 @@
         }
     }, { passive: true });
 
+    // Mobile follows native scrolling and CSS snapping instead of resizing the hero.
+    function updateMobileIndicator() {
+        if (!mobile.matches || !scrollIndicator) return;
+        scrollIndicator.classList.toggle('hidden', landingWrapper.scrollTop > hero.clientHeight / 2);
+    }
+    landingWrapper.addEventListener('scroll', updateMobileIndicator, { passive: true });
+    mobile.addEventListener('change', () => {
+        isScrolled = false;
+        isAnimating = false;
+        hero.classList.remove('scrolled');
+        if (scrollIndicator) scrollIndicator.classList.remove('hidden');
+        landingWrapper.scrollTo({ top: 0, behavior: 'instant' });
+    });
+
     // Handle scroll indicator click
     if (scrollIndicator) {
         scrollIndicator.addEventListener('click', () => {
@@ -101,6 +129,8 @@
         aboutLink.addEventListener('click', (e) => {
             if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
                 e.preventDefault();
+                document.querySelector('.header__nav-links')?.classList.remove('open');
+                document.body.classList.remove('menu-open');
                 goToState2();
             }
         });

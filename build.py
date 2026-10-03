@@ -14,7 +14,7 @@ This script:
 import os
 import json
 import re
-from datetime import datetime
+from datetime import datetime, date as calendar_date
 from pathlib import Path
 from urllib.request import urlopen, Request
 from html.parser import HTMLParser
@@ -317,7 +317,7 @@ ARTICLE_TEMPLATE = """<!DOCTYPE html>
             </div>
             {external_links_html}
           </header>
-          <div class="article__content">
+          <div class="article__content" lang="{article_language}">
             {content}
           </div>
         </div>
@@ -368,15 +368,14 @@ def slugify(text: str) -> str:
 
 
 def format_date(date_obj) -> str:
-    """Format date object to readable string."""
-    if isinstance(date_obj, datetime):
-        return date_obj.strftime("%b %d, %Y")
-    elif isinstance(date_obj, str):
+    """Match the gallery's short month and unpadded day format."""
+    if isinstance(date_obj, str):
         try:
-            dt = datetime.fromisoformat(date_obj)
-            return dt.strftime("%b %d, %Y")
-        except:
+            date_obj = datetime.fromisoformat(date_obj)
+        except ValueError:
             return date_obj
+    if isinstance(date_obj, (datetime, calendar_date)):
+        return f"{date_obj:%b} {date_obj.day}, {date_obj.year}"
     return str(date_obj)
 
 
@@ -638,6 +637,7 @@ def build_works():
                 tags_html=tags_html,
                 external_links_html=external_links_html,
                 content=html_content,
+                article_language=frontmatter.get("lang", "en"),
                 prism_theme=PRISM_THEME,
             )
             

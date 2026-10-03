@@ -34,12 +34,26 @@ body { overflow: hidden; display: block; min-height: 0; padding: var(--space-md)
   cursor: pointer;
   transition: background-color var(--motion-fast) var(--ease-out);
 }
-.demo-button:hover, .demo-reset:hover { background: var(--demo-selected); }
+.demo-header h1 { min-width: 0; }
 .demo-button[aria-pressed="true"] { background: var(--demo-selected); color: var(--demo-green); }
 .demo-button:focus-visible, .demo-reset:focus-visible { outline: none; outline-offset: var(--space-xs); }
 .demo-reset { flex: 0 0 var(--control-height); width: var(--control-height); height: var(--control-height); padding: 0; color: var(--text-secondary); }
 .demo-reset svg { width: var(--icon-size); height: var(--icon-size); }
 
+@media (hover: hover) and (pointer: fine) {
+  .demo-button:hover, .demo-reset:hover { background: var(--demo-selected); }
+}
+
 @media (max-width: 480px) {
   :root { --demo-name-width: calc(var(--control-height) + var(--space-md)); }
+}
+
+@media (max-width: 360px) {
+  :root {
+    --demo-name-width: calc(var(--control-height) + var(--space-sm));
+    --demo-handle-width: var(--icon-size);
+    --demo-grip-width: calc(var(--space-sm) + 1px);
+  }
+  .demo-header h1 { font-size: var(--font-size-base); }
+  .demo-button { padding-inline: var(--space-sm); }
 }

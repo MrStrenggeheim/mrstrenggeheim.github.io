@@ -1,0 +1,8 @@
+flowchart TB
+    Checks["Lint<br>Frontend tests<br>Functions tests"] --> Build["Build"]
+    Build --> Preview["Deploy Preview"] --> Phone["Test on Phone"]
+    Phone --> Feedback["Feedback to agent"] --> UpdatePR["Update PR"]
+    UpdatePR --> Build
+    class Checks main
+    class Preview,Phone,Feedback,UpdatePR pr
+    class Build both

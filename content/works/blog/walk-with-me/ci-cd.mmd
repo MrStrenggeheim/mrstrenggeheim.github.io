@@ -1,0 +1,21 @@
+block-beta
+    columns 15
+    Checks["Lint<br>Frontend tests<br>Functions tests"]:3 space
+    Build["Build"]:3 space
+    Release["semantic-release"]:3 space
+    Production["Deploy Production"]:3
+    space:15
+    space:8 Preview["Deploy Preview"]:3 space:4
+    space:15
+    space:4 UpdatePR["Update PR"]:3 space Feedback["Feedback to agent"]:3 space Phone["Test on Phone"]:3
+    Checks --> Build
+    Build --> Release
+    Release --> Production
+    Build --> Preview
+    Preview --> Phone
+    Phone --> Feedback
+    Feedback --> UpdatePR
+    UpdatePR --> Build
+    class Checks,Release,Production main
+    class Preview,Phone,Feedback,UpdatePR pr
+    class Build both
